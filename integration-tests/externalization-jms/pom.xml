@@ -13,8 +13,8 @@
     <description>Module events externalized to an ActiveMQ Artemis broker through JMS</description>
 
     <properties>
-        <!-- The Quarkiverse Artemis release built against the Quarkus line of the build -->
-        <quarkus-artemis.version>3.15.0</quarkus-artemis.version>
+        <!-- The Quarkiverse Artemis release built for Quarkus 4 -->
+        <quarkus-artemis.version>4.0.0.CR1</quarkus-artemis.version>
     </properties>
 
     <dependencies>
@@ -113,12 +113,6 @@
     </build>
 
     <profiles>
-        <profile>
-            <id>quarkus-4</id>
-            <properties>
-                <quarkus-artemis.version>4.0.0.CR1</quarkus-artemis.version>
-            </properties>
-        </profile>
         <profile>
             <id>native-image</id>
             <activation>

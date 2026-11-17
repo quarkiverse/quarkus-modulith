@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "local>quarkiverse/renovate-config",
+    "group:allNonMajor",
+    "schedule:weekly"
+  ],
+  "baseBranchPatterns": ["$default", "3.40.x"],
+  "packageRules": [
+    {
+      "matchBaseBranches": ["main"],
+      "matchDepNames": ["quarkus-lts"],
+      "allowedVersions": "/^4\\./"
+    },
+    {
+      "matchBaseBranches": ["3.40.x"],
+      "matchDepNames": ["quarkus-lts"],
+      "allowedVersions": "/^3\\.40\\./"
+    },
+    {
+      "matchPackageNames": ["org.apache.maven.plugins:maven-compiler-plugin"],
+      "enabled": false
+    }
+  ]
+}

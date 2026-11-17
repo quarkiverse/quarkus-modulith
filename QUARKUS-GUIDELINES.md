@@ -2,7 +2,7 @@
 
 This is the rulebook every change to this repository is reviewed against. Each rule has an ID, the rule, the reason, a check you can run, and the source it comes from. Reviews cite these IDs.
 
-Target platform: Quarkus 4.0.0.CR1 (Java 21 minimum, Java 25 tested), CDI 5 (ArC), Hibernate ORM 8 with Jakarta Persistence 4, Jackson 3. Where Quarkus 3.x behaves differently and the code still has to build on it, the rule says so.
+Target platform: Quarkus 4.0.0.CR1 (Java 21 minimum, Java 25 tested), CDI 5 (ArC), Hibernate ORM 8 with Jakarta Persistence 4, Jackson 3. The Quarkus 3.40 line is maintained on the `3.40.x` branch.
 
 Severity used in reviews:
 
@@ -173,9 +173,9 @@ Rule groups: [PRJ](#1-project-layout-and-metadata-prj) project layout, [BLD](#2-
 
 ### SVC-01 New startup code uses `ServiceRegistrar`
 
-* Rule: in Quarkus 4 bytecode recorders (`@Record`, `@Recorder`, `ExecutionTime`) are deprecated. New startup work is declared with `io.quarkus.core.deployment.service.ServiceRegistrar` injected into a build step: `reg.forService(Type.class).onStart(ctx -> Factory.create(capturedData))`. Existing recorders are migrated with the official guide. While the code must still build on Quarkus 3, recorders stay but must already respect SVC-02 to SVC-05 so the migration is mechanical.
+* Rule: in Quarkus 4 bytecode recorders (`@Record`, `@Recorder`, `ExecutionTime`) are deprecated. New startup work is declared with `io.quarkus.core.deployment.service.ServiceRegistrar` injected into a build step: `reg.forService(Type.class).onStart(ctx -> Factory.create(capturedData))`. Existing recorders are migrated with the official guide.
 * Why: recorders will be removed in a future release. Services carry explicit dependencies and run in parallel.
-* Check: on the Quarkus 4 build, `grep -rn '@Record\b\|@Recorder' --include='*.java' .` prints nothing (or only code under a Quarkus 3 source folder).
+* Check: `grep -rn '@Record\b\|@Recorder' --include='*.java' .` prints nothing.
 * Source: [WE] sections "Application Startup and Services", "Legacy Bytecode Recorders (Deprecated)", [R2S].
 
 ### SVC-02 Capture only what the transliterator supports
@@ -286,9 +286,9 @@ Rule groups: [PRJ](#1-project-layout-and-metadata-prj) project layout, [BLD](#2-
 
 ### CDI-04 Default implementations use `@Reserve`
 
-* Rule: in Quarkus 4, a default implementation users may replace (serializer, transport, repository) is annotated `@jakarta.enterprise.inject.Reserve` with `@jakarta.annotation.Priority(0)` when it has no priority. `@io.quarkus.arc.DefaultBean` is deprecated. On a Quarkus 3 build keep `@DefaultBean` in the Quarkus 3 source set only.
+* Rule: in Quarkus 4, a default implementation users may replace (serializer, transport, repository) is annotated `@jakarta.enterprise.inject.Reserve` with `@jakarta.annotation.Priority(0)` when it has no priority. `@io.quarkus.arc.DefaultBean` is deprecated.
 * Why: CDI 5 standardizes reserve beans.
-* Check: on the Quarkus 4 build, `grep -rn 'DefaultBean' --include='*.java' .` prints nothing outside Quarkus 3 sources.
+* Check: `grep -rn 'DefaultBean' --include='*.java' .` prints no annotation use, only comments.
 * Source: [MIG4] section "CDI / ArC".
 
 ### CDI-05 Synthetic beans for build-computed data
@@ -571,7 +571,7 @@ Rule groups: [PRJ](#1-project-layout-and-metadata-prj) project layout, [BLD](#2-
 
 * Rule: Quarkus 4 code uses `tools.jackson.core` and `tools.jackson.databind` (`JsonMapper`, unchecked `JacksonException`). Jackson annotations stay in `com.fasterxml.jackson.annotation`. Customization from an extension uses `JsonMapperBuilderCustomizer` (replacement of `ObjectMapperCustomizer`). Persisted formats go through the extension's `EventSerializer` SPI, so a change to the application's shared mapper does not silently change what is stored. JSON support is an optional dependency wherever the extension works without it.
 * Why: Jackson 2 types do not exist on the Quarkus 4 class path, and the stored format must stay readable across application changes.
-* Check: on the Quarkus 4 build, `grep -rn 'com.fasterxml.jackson.\(core\|databind\)' --include='*.java' .` prints nothing outside Quarkus 3 sources.
+* Check: `grep -rn 'com.fasterxml.jackson.\(core\|databind\)' --include='*.java' .` prints nothing.
 * Source: [MIG4] section "Jackson 3", [WE] section "Customizing Jackson".
 
 ### INT-02 Micrometer through the metrics SPI
