@@ -159,13 +159,13 @@ Nothing in the runtime scans the classpath or reflects on application classes, w
 
 ## Compatibility
 
-The extension is built against Quarkus 4.0.0.CR1 with Java 21 bytecode. This branch releases the Quarkus 4 line (4.0.x); the Quarkus 3.40 line (3.40.x) is released from the `3.40.x` maintenance branch, which differs in three places:
+The extension is built against Quarkus 4.0.0.CR1 with Java 21 bytecode. This branch releases the Quarkus 4 line (2.x); the Quarkus 3.40 line (1.x) is released from the `1.x` maintenance branch, which differs in three places:
 
 1. Jackson. Quarkus 4 ships Jackson 3 (`tools.jackson`), Quarkus 3 Jackson 2. The JSON code sits behind `EventSerializer`; Moments registers its Jackson module through a customizer.
-2. Recording. Quarkus 4 deprecates `@Record` and `ExecutionTime` for `ServiceRegistrar`. This branch uses static-init services, `3.40.x` keeps recorders.
+2. Recording. Quarkus 4 deprecates `@Record` and `ExecutionTime` for `ServiceRegistrar`. This branch uses static-init services, `1.x` keeps recorders.
 3. Default beans. Quarkus 4 replaces `@DefaultBean` with CDI's `@Reserve`.
 
-The extension version follows the Quarkus version it targets. CI builds on JDK 21 and builds every integration-test application as a native executable.
+CI builds on JDK 21 and builds every integration-test application as a native executable.
 
 ## Coverage
 

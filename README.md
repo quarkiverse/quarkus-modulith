@@ -49,14 +49,14 @@ The module model is computed from the Jandex index and the class files during th
 
 ## Quick start
 
-The artifacts are published to Maven Central under the group `io.quarkiverse.modulith`. Java 21 or later is required. The extension version follows the Quarkus version it targets, and each Quarkus line has its own branch:
+The artifacts are published to Maven Central under the group `io.quarkiverse.modulith`. Java 21 or later is required. Each Quarkus line has its own branch:
 
 | Quarkus | Quarkus Modulith | Branch |
 |---|---|---|
-| 4.0 | 4.0.x (pre-releases such as 4.0.0.CR1 until Quarkus 4.0 is final) | `main` |
-| 3.40 | 3.40.x | `3.40.x` |
+| 4.0 | 2.0.x (pre-releases such as 2.0.0.CR1 until Quarkus 4.0 is final) | `main` |
+| 3.40 | 1.0.x | `1.x` |
 
-Import the BOM next to the Quarkus BOM. On Quarkus 3.40, use the Quarkus 3.40 BOM with a 3.40.x version of the extension instead:
+Import the BOM next to the Quarkus BOM. On Quarkus 3.40, use the Quarkus 3.40 BOM with a 1.0.x version of the extension instead:
 
 ```xml
 <dependencyManagement>
@@ -71,7 +71,7 @@ Import the BOM next to the Quarkus BOM. On Quarkus 3.40, use the Quarkus 3.40 BO
         <dependency>
             <groupId>io.quarkiverse.modulith</groupId>
             <artifactId>quarkus-modulith-bom</artifactId>
-            <version>4.0.0.CR1</version>
+            <version>2.0.0.CR1</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -159,7 +159,7 @@ The full guide is in [docs](docs/modules/ROOT/pages/index.adoc), the public API 
 ./mvnw verify
 ```
 
-The build needs Java 21 or later and Docker, because the integration tests start databases and brokers with Dev Services. It fails below 100% line or branch coverage; the merged report is in `coverage/target/site/jacoco`. The extension builds against Quarkus 4.0.0.CR1. The Quarkus 3.40 line is built from the `3.40.x` branch.
+The build needs Java 21 or later and Docker, because the integration tests start databases and brokers with Dev Services. It fails below 100% line or branch coverage; the merged report is in `coverage/target/site/jacoco`. The extension builds against Quarkus 4.0.0.CR1. The Quarkus 3.40 line is built from the `1.x` branch.
 
 To build and test the native executables on Linux, run
 
@@ -175,7 +175,7 @@ On macOS the Linux executable cannot run on the host, so the tests run it in a c
 
 ## Releasing
 
-Releases follow the [Quarkiverse release process](https://hub.quarkiverse.io/release/). `main` always carries `999-SNAPSHOT`. To release, open a pull request that sets `current-version` (the version to release) and `next-version` (`999-SNAPSHOT`) in `.github/project.yml`. The `Quarkiverse Pre Release` check validates the versions; merging the pull request runs `Quarkiverse Prepare Release`, which tags the release and creates the GitHub release, and the tag triggers `Quarkiverse Perform Release`, which publishes the artifacts to Maven Central. Each line is released from its own branch: Quarkus 4 from `main`, Quarkus 3.40 from `3.40.x`, through a pull request to that branch.
+Releases follow the [Quarkiverse release process](https://hub.quarkiverse.io/release/). `main` always carries `999-SNAPSHOT`. To release, open a pull request that sets `current-version` (the version to release) and `next-version` (`999-SNAPSHOT`) in `.github/project.yml`. The `Quarkiverse Pre Release` check validates the versions; merging the pull request runs `Quarkiverse Prepare Release`, which tags the release and creates the GitHub release, and the tag triggers `Quarkiverse Perform Release`, which publishes the artifacts to Maven Central. Each line is released from its own branch: Quarkus 4 from `main`, Quarkus 3.40 from `1.x`, through a pull request to that branch.
 
 ## License
 

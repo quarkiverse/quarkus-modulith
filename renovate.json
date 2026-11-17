@@ -5,7 +5,7 @@
     "group:allNonMajor",
     "schedule:weekly"
   ],
-  "baseBranchPatterns": ["$default", "3.40.x"],
+  "baseBranchPatterns": ["$default", "1.x"],
   "packageRules": [
     {
       "matchBaseBranches": ["main"],
@@ -13,7 +13,7 @@
       "allowedVersions": "/^4\\./"
     },
     {
-      "matchBaseBranches": ["3.40.x"],
+      "matchBaseBranches": ["1.x"],
       "matchDepNames": ["quarkus-lts"],
       "allowedVersions": "/^3\\.40\\./"
     },

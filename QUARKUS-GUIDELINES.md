@@ -2,7 +2,7 @@
 
 This is the rulebook every change to this repository is reviewed against. Each rule has an ID, the rule, the reason, a check you can run, and the source it comes from. Reviews cite these IDs.
 
-Target platform: Quarkus 4.0.0.CR1 (Java 21 minimum, Java 25 tested), CDI 5 (ArC), Hibernate ORM 8 with Jakarta Persistence 4, Jackson 3. The Quarkus 3.40 line is maintained on the `3.40.x` branch.
+Target platform: Quarkus 4.0.0.CR1 (Java 21 minimum, Java 25 tested), CDI 5 (ArC), Hibernate ORM 8 with Jakarta Persistence 4, Jackson 3. The Quarkus 3.40 line is maintained on the `1.x` branch.
 
 Severity used in reviews:
 
