@@ -159,11 +159,7 @@ The full guide is in [docs](docs/modules/ROOT/pages/index.adoc), the public API 
 ./mvnw verify
 ```
 
-The build needs Java 21 or later and Docker, because the integration tests start databases and brokers with Dev Services. It fails below 100% line or branch coverage; the merged report is in `coverage/target/site/jacoco`. The extension builds against Quarkus 3.40.1.2, and against Quarkus 4.0.0.CR1 with
-
-```
-./mvnw verify -Pquarkus-4
-```
+The build needs Java 21 or later and Docker, because the integration tests start databases and brokers with Dev Services. It fails below 100% line or branch coverage; the merged report is in `coverage/target/site/jacoco`. The extension builds against Quarkus 3.40.1.2. The Quarkus 4 line is built from `main`.
 
 To build and test the native executables on Linux, run
 

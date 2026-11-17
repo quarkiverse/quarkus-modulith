@@ -84,7 +84,7 @@ import io.quarkus.runtime.configuration.ConfigurationException;
 /**
  * Finds the {@code @ApplicationModuleListener} methods, validates them, creates their invokers and compiles their
  * conditions, and registers one synthetic observer per listened event type. The listener table is handed to the
- * dispatcher by {@code ListenerRecordingSteps}, which differs between Quarkus 3 and Quarkus 4.
+ * dispatcher by {@code ListenerRecordingSteps}.
  */
 class ListenerProcessor {
 
