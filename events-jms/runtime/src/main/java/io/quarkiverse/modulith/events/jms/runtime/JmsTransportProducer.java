@@ -1,6 +1,5 @@
 package io.quarkiverse.modulith.events.jms.runtime;
 
-
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Singleton;
