@@ -17,7 +17,7 @@
         <!-- The Spring versions Spring Modulith 2.1.2 is built against, for the parity tests only -->
         <spring-boot.version>4.1.2</spring-boot.version>
         <spring-framework.version>7.0.9</spring-framework.version>
-        <spring-data.version>4.1.1</spring-data.version>
+        <spring-data.version>4.1.2</spring-data.version>
     </properties>
 
     <dependencyManagement>
