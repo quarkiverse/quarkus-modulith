@@ -1,0 +1,72 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a| [[quarkus-modulith-events-jms_quarkus-modulith-events-jms-destination-type]] [.property-path]##link:#quarkus-modulith-events-jms_quarkus-modulith-events-jms-destination-type[`+++quarkus.modulith.events.jms.destination-type+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.jms.destination-type+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether the routing target of an externalized event names a queue or a topic. Applies to every event, like Spring's `spring.jms.pub-sub-domain`, which Spring Modulith's JMS externalization follows through `JmsTemplate`. Takes effect at startup.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_JMS_DESTINATION_TYPE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_JMS_DESTINATION_TYPE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`queue`, `topic`
+|`+++queue+++`
+
+a| [[quarkus-modulith-events-jms_quarkus-modulith-events-jms-send-timeout]] [.property-path]##link:#quarkus-modulith-events-jms_quarkus-modulith-events-jms-send-timeout[`+++quarkus.modulith.events.jms.send-timeout+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.jms.send-timeout+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How long to wait for the JMS provider to return from a send before the externalization counts as failed and the event publication stays incomplete. The send runs on a worker thread that JMS cannot interrupt, so also set the provider's own send timeout, such as `jms.sendTimeout` for Qpid JMS or `callTimeout` for Artemis: Qpid JMS waits forever by default. A message the provider sends after the timeout may be sent again on resubmission. Takes effect at startup.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_JMS_SEND_TIMEOUT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_JMS_SEND_TIMEOUT+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events-jms_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++30S+++`
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-modulith-events-jms_quarkus-modulith]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

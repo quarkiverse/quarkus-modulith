@@ -1,0 +1,188 @@
+= Event externalization
+
+include::./includes/attributes.adoc[]
+
+Some module events are interesting to other systems. Quarkus Modulith publishes selected events to a message broker, in addition to delivering them to the module listeners, like Spring Modulith's event externalization. The event publication registry guards the externalization: a publication completes only when the broker acknowledged the message, so an event sent while the broker is down stays incomplete and is sent again.
+
+To externalize events:
+
+. Add a transport extension (see <<transports>>), or declare a bean implementing `io.quarkiverse.modulith.events.externalization.EventExternalizationTransport`.
+. Annotate the event types with `@io.quarkiverse.modulith.events.Externalized` or jMolecules' `@org.jmolecules.event.annotation.Externalized`.
+. Optionally declare the routing target in the annotation, `target` or `target::key`.
+
+[source,java]
+----
+@Externalized("customer-created::{event.lastname}")
+public record CustomerCreated(String id, String lastname) {
+}
+----
+
+[[transports]]
+== Supported infrastructure
+
+[cols="1,2,4"]
+|===
+|Broker |Artifact |Routing
+
+|Kafka
+|`quarkus-modulith-events-messaging` with `quarkus-messaging-kafka`
+|The target is the topic and the key the record key, as in Spring Modulith. Headers become record headers (`byte[]` as is, other values as UTF-8 text). The payload is JSON. Generated channels default to `acks=all` and `enable.idempotence=true`, so an acknowledged event survives a leader failover.
+
+|RabbitMQ (AMQP 0.9.1)
+|`quarkus-modulith-events-messaging` with `quarkus-messaging-rabbitmq`
+|The target is the exchange and the key the routing key. Headers become message headers. Publisher confirms are on, so the publication completes on the broker's confirm.
+
+|AMQP 1.0
+|`quarkus-modulith-events-messaging` with `quarkus-messaging-amqp`
+|The target is the address, the key the subject, headers become application properties. Not part of Spring Modulith.
+
+|Any Quarkus Messaging connector
+|`quarkus-modulith-events-messaging`
+|The target names the outgoing channel. Every message carries `io.quarkiverse.modulith.events.messaging.RoutingMetadata` with the target and the headers, including `quarkusModulith_routingTarget` and Spring's `springModulith_routingTarget`.
+
+|JMS
+|`quarkus-modulith-events-jms` with a `ConnectionFactory`, for example from `quarkus-artemis-jms` or `quarkus-qpid-jms`
+|The target is the destination, a queue or, with `quarkus.modulith.events.jms.destination-type=topic`, a topic. JMS has no routing key. The payload is a `TextMessage` with the event serialized by the event publication serializer. Headers become message properties.
+
+|JobRunr
+|`quarkus-modulith-events-jobrunr` with `quarkus-jobrunr`
+|An outbox in `outbox` mode: each event becomes one JobRunr job per `JobRunrExternalizationTransport` bean, enqueued in the business transaction. The built-in job transport sends through the broker transport above.
+|===
+
+`EventExternalized#getBrokerResult()` is Kafka's `RecordMetadata`, the RabbitMQ delivery tag, the JMS message ID, and `null` for AMQP 1.0.
+
+=== Quarkus Messaging
+
+Quarkus Messaging channels are declared at build time, so the extension generates one outgoing emitter per target it knows: the static targets of the `@Externalized` types (with the default routing) and the targets listed in `quarkus.modulith.events.messaging.channels`. Each channel is named like its target; connectors use the channel name as topic, exchange or address unless configured otherwise. Targets that are expressions, or that a custom configuration computes, go through `quarkus.modulith.events.messaging.default-channel`, where the target is set on the message: the topic for Kafka, the address for AMQP 1.0, the exchange for RabbitMQ on Quarkus 4 (on Quarkus 3 the RabbitMQ connector cannot override the exchange per message, the target travels in the headers instead). A target without channel fails the send with the property to set.
+
+When only one connector is on the class path, Quarkus attaches the generated channels to it automatically. Otherwise configure them as usual, quoting names that contain dots: `mp.messaging.outgoing."order.OrderPlaced".connector=smallrye-kafka`.
+
+The payload is converted to JSON with the event publication serializer, unless `quarkus.modulith.events.messaging.enable-json=false`, which hands the mapped object to the connector's serializer. A payload that already is a `Message` is sent as is, with the routing metadata added. Headers whose value is `null` are left out of `RoutingMetadata`. The publication completes on the connector's acknowledgement, or fails after `quarkus.modulith.events.messaging.ack-timeout`.
+
+The Kafka and RabbitMQ defaults of the generated channels (`acks`, `enable.idempotence`, `value.serializer`, `publish-confirms`) are channel properties, so they win over connector-wide settings such as `mp.messaging.connector.smallrye-kafka.acks`: override them per channel. Change `acks` and `enable.idempotence` together, since an idempotent producer needs `acks=all`. When the build knows the connector of a channel (`mp.messaging.outgoing.<channel>.connector` in `application.properties`), only that connector's defaults are set. With RabbitMQ, turning publisher confirms off fails the startup in `outbox` mode and logs a warning in `module-listener` mode, where the publication would complete once the message is written to the socket.
+
+Each channel buffers the messages its connector has not requested yet, up to `mp.messaging.emitter.default-buffer-size` (128). While the buffer is full, for instance while the broker is unavailable, sends fail right away and the publications stay incomplete until they are resubmitted; the channel takes messages again as soon as the connector requests more.
+
+=== JMS
+
+Each send uses its own `JMSContext` on a worker thread and completes when `send` returned, which for persistent messages means the broker stored the message. A send that has not returned after `quarkus.modulith.events.jms.send-timeout` (30 seconds) fails the externalization, and the publication stays incomplete. JMS cannot interrupt a send, so the worker thread stays blocked until the provider gives up: set the provider's send timeout too, such as `jms.sendTimeout` in the Qpid JMS URL (Qpid JMS waits forever by default, also while a `failover:` URL reconnects) or `callTimeout` for Artemis. Header names must be valid JMS property names (Java identifiers that are not selector keywords); other names fail the send. Each send opens a context, and with a plain connection factory a connection, so use a pooling connection factory such as `quarkus-pooled-jms` in production.
+
+=== JobRunr
+
+In `outbox` mode the extension replaces the registry outbox. Jobs are enqueued on the application's datasource inside the JTA transaction, so a rolled-back business transaction enqueues nothing; JobRunr retries failed jobs with its own settings (`quarkus.jobrunr.jobs.*`). Enable `quarkus.jobrunr.background-job-server.enabled=true` on at least one node. Applications may add their own `io.quarkiverse.modulith.events.jobrunr.JobRunrExternalizationTransport` beans, each gets its own job, like in Spring Modulith. The built-in job waits for the broker's acknowledgement at most `quarkus.modulith.events.externalization.outbox.send-timeout` and then fails, so JobRunr retries it instead of a send that never completes holding a JobRunr worker.
+
+== How it works
+
+Every event the application fires through `jakarta.enterprise.event.Event` goes through three steps, like in Spring Modulith:
+
+. _Selection_: the `EventExternalizationConfiguration` decides whether the event is externalized. By default only types below the application's base package that carry a supported `@Externalized` annotation are selected. The annotation is found on the type, its superclasses and interfaces, and on annotations of those (meta-annotations).
+. _Mapping_: the configuration may replace the event with another payload. Headers are computed from the mapped payload.
+. _Routing_: the configuration determines the routing target. By default it is the target declared in the annotation, and otherwise the application-local type name: `com.acme.app.sample.SampleEvent` in an application with base package `com.acme.app` goes to `sample.SampleEvent`. Types outside the base package go to their fully qualified name.
+
+The build registers one observer for each event type the beans of the application fire through an injected `Event<X>`, and for each externalized type. Injection points in beans of libraries and other extensions are not considered. Events fired through `Event<Object>` are observed as `Object`: then every unqualified event of the application goes through the configuration's selection, which costs one `supports` call per event, so prefer typed `Event<X>` injection points. Only events without qualifiers are externalized, so container events never reach it. To externalize a qualified event, fire it again without qualifier, or send it with the `EventExternalizer` bean.
+
+After the broker acknowledged a message, the CDI event `EventExternalized` is fired with the original event, the mapped payload, the resolved routing target and the broker's result, for example Kafka's `RecordMetadata`. Observe it as `EventExternalized<?, ?>`, CDI cannot resolve its type arguments from the runtime types.
+
+[source,java]
+----
+void onExternalized(@Observes EventExternalized<?, ?> externalized) {
+    if (externalized.getEventType() == CustomerCreated.class) {
+        log.infof("Sent to %s: %s", externalized.getTarget(), externalized.getBrokerResult());
+    }
+}
+----
+
+== Routing expressions
+
+The target and the key may be expressions evaluated against the event. The build parses every expression of the `@Externalized` annotations, resolves the members it uses and generates the code that evaluates it, so a typo fails the build and native executables need no reflection for routing. Both notations below mean the same:
+
+[cols="2,2,3"]
+|===
+|Quarkus |Spring Modulith |Meaning
+
+|`{event}`
+|`#{#this}` or `#{#root}`
+|The event, converted with `toString()`
+
+|`{event.lastname}`
+|`#{#this.lastname}`
+|A property: `getLastname()`, `isLastname()` for a `boolean`, `lastname()` (records) or a public field
+
+|`{event.getLastname()}`
+|`#{#this.getLastname()}`
+|A method without parameters
+
+|`{event.customer.lastname}`
+|`#{#this.customer.lastname}`
+|A chain
+
+|`{inject:keys.of(event)}`
+|`#{@keys.of(#this)}`
+|A method of the bean named `keys` (`@Named("keys")`), with the event or its properties as arguments
+|===
+
+Values taken from the event become broker destinations and keys as they are. Do not route on untrusted input without validating it first: an unexpected value can create or target arbitrary topics or queues.
+
+An expression part starts with `{` or `#{`, and may continue with literal text and further expressions: `{event.region}-orders`. A part that starts with literal text is literal, like in Spring Modulith. A key that evaluates to `null` means no key, a target that evaluates to `null` or blank fails the send, and so does a `null` in the middle of a chain (`{event.customer.id}` with no customer), with the expression and the member in the message. Members must be public, or package-private in the package of the event type when the event is an application class (an event from a library jar is loaded by another class loader in dev and test mode, so only its public members are reachable), and beans called by expressions must have a scope. Other SpEL constructs, such as `T(...)` or operators, fail the build with the list of supported forms.
+
+Expressions are only compiled when they are declared in an `@Externalized` annotation. A routing function of a custom configuration returns resolved targets.
+
+== Programmatic configuration
+
+Declare a CDI bean of type `EventExternalizationConfiguration` to replace the default. The builder is Spring Modulith's:
+
+[source,java]
+----
+@Produces
+@Singleton
+EventExternalizationConfiguration externalization() {
+    return EventExternalizationConfiguration.externalizing()             // <1>
+            .select(EventExternalizationConfiguration.annotatedAsExternalized()) // <2>
+            .mapping(SomeEvent.class, event -> new SomeEventV1(event.id())) // <3>
+            .headers(SomeEventV1.class, payload -> Map.of("version", 1))  // <4>
+            .routeKey(WithKeyProperty.class, WithKeyProperty::getKey)    // <5>
+            .build();
+}
+----
+<1> Starts a configuration.
+<2> Selects the events: by predicate, `selectByPackage`, `selectByPackagesAndFilter`, `selectByType`, `selectByAnnotation`, or `selectAndRoute` to select and route by an annotation in one step. Selecting disables the base package filter of the default.
+<3> Maps the events of a type. Routing still uses the original event unless `routeMapped()` is called.
+<4> Adds headers, globally with `headers(Function)` or per payload type.
+<5> Sets the key. `route`, `routeAll`, `routeAllByType`, `routeOptional` and `routeOptionalByType` set whole targets.
+
+`EventExternalizationConfiguration.defaults(packages)`, `disabled()`, `byApplicationLocalName(packages)`, `byExternalizedAnnotations()` and `byFullyQualifiedTypeName()` are available as building blocks.
+
+== Modes
+
+`quarkus.modulith.events.externalization.mode` selects how events reach the broker, like Spring Modulith's `spring.modulith.events.externalization.mode`:
+
+`module-listener` (default):: The event is stored as an event publication in the publishing transaction and sent on a worker thread after the commit. The publication completes when the broker acknowledged. When the send fails, the publication stays incomplete with status `FAILED` and the event publication registry resubmits it like any module listener publication, for example on restart or through `IncompleteEventPublications` and `FailedEventPublications`. Nothing is sent when the transaction rolls back.
+
+`outbox`:: The event is recorded in the publishing transaction and a job sends it later: through the event publication registry, or as a JobRunr job when `quarkus-modulith-events-jobrunr` is present. The registry outbox is drained after every transaction that recorded events, at startup and every `quarkus.modulith.events.externalization.outbox.interval`. Each run reads the pending publications page by page (`outbox.batch-size`, filtered by the store), sends them oldest first and waits for each acknowledgement, at most `outbox.send-timeout`. A failure stops the run, so later events do not overtake the failed one, and the next run starts with it again. Publications are claimed with a conditional update before they are sent, so several instances never send the same one; a run stops at a publication another instance is sending. A publication claimed or processing for longer than `outbox.send-timeout` plus `outbox.stale-after` belongs to an instance that stopped, and the next run takes it over. A publication whose event cannot be read (its type is gone, its JSON does not match) is marked `FAILED` with one more attempt and skipped, so it never blocks the outbox. With `quarkus.modulith.events.resubmission.abandon-after-attempts`, a publication that failed that many times, for example a message the broker always rejects, is skipped with a warning and listed by `AbandonedEventPublications`; without it, the drain keeps retrying it before the later ones. At shutdown the drain stops taking runs and waits up to `outbox.send-timeout` for the current one. `interval` and `send-timeout` must be positive, `stale-after` must not be negative and `batch-size` must be at least 1, or the application does not start. The event publication registry's own resubmission jobs leave outbox publications to the drain. This mode needs an event publication store.
+
+Sends and their outcomes run on the executor of module listeners, `quarkus.modulith.listeners.executor`: the worker pool by default, or virtual threads.
+
+`quarkus.modulith.events.externalization.serialize-externalization=true` makes the default configuration send one event at a time in `module-listener` mode, so that the broker sees them in publication order. Each event takes its place in the queue on the publishing thread, when its transaction commits (or when it is published outside a transaction), so the order holds although the sends run on worker threads; events of transactions that commit concurrently on different threads go in commit order. Sends are queued without blocking a thread, and one that the broker does not acknowledge within `quarkus.modulith.events.externalization.serialized-send-timeout` (default `30s`) fails, so the next one can go. Failed sends of the `module-listener` mode are logged at `ERROR` once, then at `DEBUG` until a send succeeds again.
+
+Without an event publication store, `module-listener` mode still sends the events, without the guarantees: a failed send is only logged.
+
+Externalization publications are stored with the listener identifiers `io.quarkiverse.modulith.events.externalization.runtime.EventExternalizerModuleListener.externalize(java.lang.Object)` and `...OutboxEventExternalizer.externalize(java.lang.Object)`. Incomplete publications that Spring Modulith stored for its `EventExternalizerModuleListener` are resubmitted too, after a migration.
+
+== Configuration
+
+include::includes/quarkus-modulith-events_quarkus.modulith.adoc[leveloffset=+1, opts=optional]
+
+include::includes/quarkus-modulith-events-messaging.adoc[leveloffset=+1, opts=optional]
+
+include::includes/quarkus-modulith-events-jms.adoc[leveloffset=+1, opts=optional]
+
+== Differences from Spring Modulith
+
+* Routing expressions are compiled at build time instead of being evaluated with SpEL; see <<_routing_expressions>> for the supported forms.
+* Quarkus Messaging channels are declared at build time, so the messaging transport generates one channel per target it knows and uses a default channel for the others. One `enable-json` property replaces Spring's Kafka and RabbitMQ ones.
+* RabbitMQ and JMS send the configured headers, Spring Modulith's transports drop them. RabbitMQ publisher confirms are on in both modes.
+* JobRunr jobs carry the event as JSON in a job request instead of a lambda.
+* Qualified CDI events are not externalized.
+* Package matching is per package segment: the package `com.acme` does not contain `com.acmeextra`.
+* The registry outbox mode is native to Quarkus Modulith. Spring Modulith 2.1.2 delegates `outbox` mode to Namastack Outbox or JobRunr; Namastack is a Spring Boot library and is not supported.
+* `EventExternalized` is observed with wildcard type arguments.

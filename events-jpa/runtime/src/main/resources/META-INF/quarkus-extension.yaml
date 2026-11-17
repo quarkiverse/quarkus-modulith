@@ -1,0 +1,14 @@
+name: Modulith Event Publication Registry (JPA)
+description: "Stores module events in a transactional outbox table with Hibernate ORM and submits incomplete ones again"
+metadata:
+  keywords:
+    - modulith
+    - outbox
+    - events
+    - hibernate-orm
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/events.html
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  config:
+    - "quarkus.modulith.events."

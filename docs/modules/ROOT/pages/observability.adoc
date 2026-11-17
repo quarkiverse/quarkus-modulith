@@ -1,0 +1,85 @@
+= Observability
+
+include::./includes/attributes.adoc[]
+
+Add `quarkus-modulith-observability` to observe module invocations and events like Spring Modulith's observability support, with the same names and tags.
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-observability</artifactId>
+</dependency>
+----
+
+== Spans of module invocations
+
+With `quarkus-opentelemetry`, every call into a module from outside it opens a span. Calls between beans of the same module are not observed again. The observed beans are the ones Spring Modulith observes, decided at build time: REST resources, event listeners for other modules' events, beans whose class or a supertype is exposed, messaging endpoints, and the implementations of REST Data with Panache resources (Spring Modulith observes Spring Data REST repositories).
+
+[cols="1,2"]
+|===
+|Span |Value
+
+|name
+|`<module name> > <abbreviated type>.<method>(<parameter types>)`, Spring Modulith's contextual name, for example `Orders > c.a.o.OrderService.place(j.l.String)`
+
+|`module.identifier`
+|the module identifier
+
+|`module.name`
+|the module display name
+
+|`module.invocation-type`
+|`event-listener` for event listener methods, `bean` otherwise
+
+|`module.method`
+|the method name
+|===
+
+Failures, exceptions and errors alike, record the throwable and set the span status to error. Every span started inside a module invocation, for example a database or HTTP client span, gets the `module.identifier` attribute too, like Spring Modulith's `ModuleIdentifierPassingObservationFilter`.
+
+`ModulithSpanCustomizer` beans change the spans before they start, the counterpart of `ModulithObservationConvention`.
+
+A failure of the observability itself, for example a customizer that throws, never fails the call: the call runs unobserved, the failure is logged as a warning once per kind (repetitions at debug level), and the current module and the OpenTelemetry context of the thread are restored as before the call.
+
+Two limits differ from Spring Modulith:
+
+* Beans created by producer methods are not observed, while Spring Modulith observes the beans of `@Bean` methods too. Producer calls are made by the container, often while it starts, and observing them broke OpenTelemetry's own startup. Expose a class-based bean instead, a class with a bean defining annotation such as `@ApplicationScoped`, to observe calls into it.
+* The span and the timer end when the method returns. For a method that returns a `Uni`, `Multi` or `CompletionStage`, that is when the pipeline is assembled, not when its work ends, so the duration is short and failures signalled later are not recorded. The current module is not carried to the continuations either.
+
+== Metrics
+
+With `quarkus-micrometer`:
+
+[cols="1,1,2"]
+|===
+|Meter |Type |Tags
+
+|`module.invocations`
+|timer
+|`module.identifier`, `module.name`, `module.invocation-type`, `error`
+
+|`module.events.published`
+|counter
+|`event_type` (`<module>.<SimpleTypeName>`), `module_identifier`, `module_name`
+
+|`module.events.published.<module>.<SimpleTypeName>`
+|counter
+|`module_identifier`, `module_name`
+
+|`modulith.event.publications`
+|gauge, Quarkus extra
+|`status`: the number of publications per status in the event publication store
+|===
+
+The `event_type`, `module_identifier` and `module_name` tags are the ones Spring Modulith's `ModuleEventListener` writes: the lower-cased constant names of `ModulithMetrics.LowKeys`, not their `module.event.type`, `module.identifier` and `module.name` key names.
+
+The publication gauges exist when an event publication store is present. A background thread counts the publications in a transaction of its own every `quarkus.modulith.observability.metrics.publications.refresh-interval` (30 seconds by default), and scrapes read the last counts, so they never query the store. A gauge reads `NaN` until the first count. The `completed` gauge is left out unless `quarkus.modulith.observability.metrics.publications.include-completed=true`: in the `update` completion mode completed publications are kept, and counting them scans an ever larger table. `quarkus.modulith.observability.metrics.publications.enabled=false` turns the gauges off; a `refresh-interval` that is zero or negative fails the startup with a message naming the property. When the store cannot be counted, the gauges keep the last counts, the first failure is logged as a warning with its cause, later ones at debug level, and an info message says when counting works again.
+
+`ModulithEventMetricsCustomizer` beans add tags to the per type counters or replace them, through `ModulithEventMetrics.customize`, as in Spring Modulith.
+
+Events are counted through one observer per module event type, registered at build time, so the application keeps no observer of `Object`. A type whose supertype is also a module event type, for example the implementations of an event interface that a listener observes, gets no observer of its own, so each event is counted once. A failure while counting, for example in a `ModulithEventMetricsCustomizer`, is logged (once per event type as a warning) and never fails the publication of the event.
+
+== Turning it off
+
+`quarkus.modulith.observability.enabled=false` turns everything off. `quarkus.modulith.observability.tracing.enabled` and `quarkus.modulith.observability.metrics.enabled` turn off one part. The three are fixed at build time. When a part is off or its library is missing, the build registers no interceptor, observer or meter for it, so module calls and events cost nothing extra.

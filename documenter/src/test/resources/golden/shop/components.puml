@@ -1,0 +1,34 @@
+@startuml
+title <size:24>Shop</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Component>
+
+System_Boundary("Shop_boundary", "Shop", $tags="") {
+  Container_Boundary("Shop.Shop_boundary", "Shop", $tags="") {
+    Component(Shop.Shop.ProductCatalog, "Product Catalog", $techn="Module", $descr="", $tags="", $link="")
+    Component(Shop.Shop.Orders, "Orders", $techn="Module", $descr="", $tags="", $link="")
+    Component(Shop.Shop.Inventory, "Inventory", $techn="Module", $descr="", $tags="", $link="")
+    Component(Shop.Shop.Shipping, "Shipping", $techn="Module", $descr="", $tags="", $link="")
+  }
+
+}
+
+Rel(Shop.Shop.Inventory, Shop.Shop.Orders, "listens to", $techn="", $tags="", $link="")
+Rel(Shop.Shop.Shipping, Shop.Shop.Inventory, "uses", $techn="", $tags="", $link="")
+Rel(Shop.Shop.Orders, Shop.Shop.ProductCatalog, "uses", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

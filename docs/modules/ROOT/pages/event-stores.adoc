@@ -1,0 +1,165 @@
+= Event publication stores
+
+include::./includes/attributes.adoc[]
+
+Besides Hibernate ORM (see xref:events.adoc[]), the event publication registry stores publications with plain JDBC on an Agroal datasource, in MongoDB and in Neo4j. Each store is an extension that provides the `EventPublicationRepository` bean and the capability `io.quarkiverse.modulith.events.repository`, so only one store can be added to an application. Every store keeps the tables, collections or nodes of the matching Spring Modulith 2.1.2 store, so an application can keep its data when it moves from Spring Modulith, and every store passes the contract tests of `quarkus-modulith-events-tck`.
+
+The registry settings shared by all stores (completion mode, resubmission, cleanup) are under `quarkus.modulith.events`. Each store owns its own prefix.
+
+[cols="1,1,1,1"]
+|===
+|Store |Artifact |Prefix |Spring Modulith counterpart
+
+|JDBC
+|`quarkus-modulith-events-jdbc`
+|`quarkus.modulith.events.jdbc`
+|`spring-modulith-events-jdbc`
+
+|MongoDB
+|`quarkus-modulith-events-mongodb`
+|`quarkus.modulith.events.mongodb`
+|`spring-modulith-events-mongodb`
+
+|Neo4j
+|`quarkus-modulith-events-neo4j`
+|`quarkus.modulith.events.neo4j`
+|`spring-modulith-events-neo4j`
+|===
+
+Completed publications are handled as `quarkus.modulith.events.completion-mode` (fixed at build time) says: `update` sets the completion date and keeps them, `delete` removes them, and `archive` moves them to the archive table, collection or label, where they are read and cleaned up from. Deleting publications by identifier deletes archived ones too.
+
+Every store filters, orders and pages in the database: resubmission and the outbox drain read pages ordered by publication date, then identifier, and claiming a publication for a new delivery is one conditional update, so several instances never claim the same publication. Neo4j takes the node's write lock before checking the condition. A publication whose event type is no longer on the class path is still listed; reading its event fails with a message naming the publication and the type.
+
+== JDBC
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-events-jdbc</artifactId>
+</dependency>
+----
+
+The store writes to the `EVENT_PUBLICATION` table (and `EVENT_PUBLICATION_ARCHIVE` in archive mode) of the default datasource, or of the datasource named by `quarkus.modulith.events.jdbc.datasource`. The build fails when that datasource is not configured. Statements join the current JTA transaction, so a publication commits or rolls back with the business data of the same transaction. Filters, ordering and limits run in the database.
+
+Supported databases: H2, HSQLDB, PostgreSQL, MySQL, MariaDB, Microsoft SQL Server and Oracle (23 or later for the shipped `CREATE TABLE IF NOT EXISTS` scripts; on older versions create the tables yourself). The build takes the database from the datasource's `db-kind` and fails for a `db-kind` without schema files. With `db-kind=other` (HSQLDB, for example) the database is detected from a connection at startup, which fails for an unsupported database with the list of supported ones.
+
+Two table structures exist, the same as in Spring Modulith:
+
+* Version 2 (default) with the `STATUS`, `COMPLETION_ATTEMPTS` and `LAST_RESUBMISSION_DATE` columns. A row without status (written by Spring Modulith 1.x, or kept from a version 1 table migrated to version 2) has the status `COMPLETED` when it has a completion date and `FAILED` otherwise, see <<rows-without-status>>.
+* Version 1, selected with `quarkus.modulith.events.jdbc.use-legacy-structure=true` at build time. Without those columns, publications are not marked processing or failed, incomplete publications read as `PUBLISHED` with no attempts, no publication is found as failed or stale, and a claim only checks that the publication is incomplete, so several instances may resubmit the same publication. Move to version 2 for multi-instance deployments.
+
+=== Creating the tables
+
+With `quarkus.modulith.events.jdbc.schema-initialization.enabled=true` the store creates the tables at startup, after Flyway or Liquibase migrated at startup and before the registry republishes outstanding publications. A table that exists, whatever its layout, is left as it is, including its indexes. Initialization is off by default, like in Spring Modulith.
+
+The table definitions are Spring Modulith's, shipped on the class path for applications that manage the schema with Flyway or Liquibase:
+
+----
+db/modulith/events/jdbc/v2/schema-<database>.sql
+db/modulith/events/jdbc/v2/schema-<database>-archive.sql
+db/modulith/events/jdbc/v1/schema-<database>.sql
+db/modulith/events/jdbc/v1/schema-<database>-archive.sql
+----
+
+where `<database>` is `h2`, `hsqldb`, `postgresql`, `mysql`, `mariadb`, `sqlserver` or `oracle`. Copy the file into a migration, for example `db/migration/V1__event_publication.sql`.
+
+`quarkus.modulith.events.jdbc.schema` puts the tables in another schema. As in Spring Modulith, only H2, HSQLDB and PostgreSQL support it; the other databases fail at startup with the property to remove. The name goes into the statements, so it must be an unquoted SQL identifier: a letter or underscore, then up to 62 letters, digits or underscores. Anything else fails at startup.
+
+=== Indexes, event size and time zones
+
+The shipped table definitions are Spring Modulith's, kept as they are so tables stay interchangeable. They index the completion date and the serialized event, but nothing serves the pages of resubmission and of the outbox drain (`WHERE COMPLETION_DATE IS NULL ... ORDER BY PUBLICATION_DATE, ID`) or the outbox's `LISTENER_ID` filter. With `update` completion mode the table keeps every completed publication, so on a large table each page sorts many rows. Add the indexes in your own migration when that matters, for example:
+
+[source,sql]
+----
+CREATE INDEX EVENT_PUBLICATION_INCOMPLETE_IDX ON EVENT_PUBLICATION (COMPLETION_DATE, PUBLICATION_DATE, ID);
+CREATE INDEX EVENT_PUBLICATION_BY_LISTENER_IDX ON EVENT_PUBLICATION (LISTENER_ID, PUBLICATION_DATE);
+----
+
+On H2, HSQLDB, MySQL, MariaDB and Oracle `SERIALIZED_EVENT` is a `VARCHAR(4000)` (PostgreSQL uses `TEXT`, SQL Server `NVARCHAR(MAX)`). Storing a larger event fails the insert, and with it the business transaction that published the event. Widen the column in your migration if events can be larger.
+
+Dates are bound as `java.sql.Timestamp` in the JVM's default time zone, as Spring Modulith binds them, so rows it wrote read back the same. The HSQLDB, Oracle and SQL Server definitions use timestamp columns without time zone, so on those databases every instance must run in the same time zone.
+
+include::includes/quarkus-modulith-events-jdbc.adoc[leveloffset=+2, opts=optional]
+
+== MongoDB
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-events-mongodb</artifactId>
+</dependency>
+----
+
+The store writes to the `event_publication` collection (and `event_publication_archive` in archive mode) of the default MongoDB client, in the database `quarkus.modulith.events.mongodb.database`, which defaults to `quarkus.mongodb.database`. Documents have Spring Modulith's fields: `_id`, `publicationDate`, `listenerId`, `event`, `completionDate`, `status`, `completionAttempts` and `lastResubmissionDate`, plus `eventType`. The event is an embedded document with its class in `_class`, the form Spring Data writes, so documents written by Spring Modulith are read as well. Events whose serialized form is not a JSON object are stored as a string.
+
+Identifiers are stored as binary UUIDs in the `standard` representation. Set `quarkus.modulith.events.mongodb.uuid-representation=java-legacy` to read a collection written by a Spring Boot application with Spring Boot's default.
+
+Looking up the publication of one event compares the embedded event document as a whole, so the order of its fields counts. A document Spring Data wrote with its fields (or `_class`) in another order than the event serializer's is not found by that lookup. It is still read, delivered and resubmitted.
+
+Like Spring Modulith's, the store creates no indexes. In completion mode `update` the collection keeps growing, so create the indexes the store queries by:
+
+[source,javascript]
+----
+db.event_publication.createIndex({ completionDate: 1, publicationDate: 1, _id: 1 })
+db.event_publication.createIndex({ listenerId: 1, status: 1 })
+----
+
+=== Transactions
+
+Publications should be written in the same transaction as the business data. With `quarkus-mongodb-panache` and a replica set (Dev Services start one), a `@Transactional` method writes Panache entities in one MongoDB transaction bound to the JTA transaction. The store joins that client session, whichever of the two writes first, so publications commit and roll back with the entities. This is the counterpart of Spring Modulith's `spring.modulith.events.mongodb.transaction-management.enabled`, which is on by default.
+
+[source,java]
+----
+@Transactional
+public void ship(Parcel parcel) {
+    parcel.persist();
+    events.fire(new ParcelShipped(parcel.label)); // the publication joins the Panache transaction
+}
+----
+
+Like the Panache transaction, the MongoDB transaction commits after the JTA transaction. The store therefore commits it first when the deliveries of the transaction start, so a listener never looks for a publication that is not visible yet. If that commit fails, the store logs an error and skips the deliveries of the transaction. The commit is retried when the JTA transaction completes, and the publications it stores stay incomplete until a resubmission (`quarkus.modulith.events.republish-interval`) delivers them.
+
+In a transaction marked rollback-only, publications are written in the session of the transaction, whose abort discards them. When no session joins the transaction yet, none can be started any more, so the publications are not written at all. Claims of publications for resubmission run outside the session, as one atomic update, so two instances claiming the same publication never fail with a write conflict.
+
+The session is started from the default MongoDB client. Panache entities written in the same transaction must use the default client too (no `@MongoEntity(clientName = ...)`), since the driver refuses a session of another client.
+
+MongoDB with Panache for Kotlin works the same way. Without Panache, or with `quarkus.modulith.events.mongodb.transaction-management.enabled=false` (build time), each publication is written on its own, outside the business transaction. When transaction management is on but Panache is missing, the build logs a warning.
+
+include::includes/quarkus-modulith-events-mongodb.adoc[leveloffset=+2, opts=optional]
+
+== Neo4j
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-events-neo4j</artifactId>
+</dependency>
+----
+
+The store uses the driver of the https://docs.quarkiverse.io/quarkus-neo4j/dev/[Quarkiverse Neo4j extension] and writes `Neo4jEventPublication` nodes (`Neo4jEventPublicationArchive` in archive mode) with Spring Modulith's properties: `identifier`, `eventSerialized`, `eventHash`, `eventType`, `listenerId`, `publicationDate`, `completionDate`, `status`, `completionAttempts` and `lastResubmissionDate`. Publications of an event are looked up by the SHA-256 hash of the serialized event, with the MD5 hash of older Spring Modulith versions as a second candidate.
+
+`quarkus.modulith.events.neo4j.event-index.enabled=true` creates, at startup and unless they exist, the `eventHashIndex` index on `eventHash` (as Spring Modulith does) and the unique constraints `eventPublicationIdentifier` and `eventPublicationArchiveIdentifier` on the `identifier` of `Neo4jEventPublication` and `Neo4jEventPublicationArchive` nodes. Every lifecycle update (processing, completion, failure, claim) looks a publication up by its identifier, so without the constraint's index each update scans all nodes of the label, which in `update` mode keeps every completed publication. Spring Modulith does not create the constraints; creating them fails when nodes with the same identifier exist already, or when an index of another kind covers the same property. `quarkus.modulith.events.neo4j.database` selects the database, the server's default one otherwise.
+
+Neo4j does not take part in JTA transactions: each repository call runs in its own driver transaction. A publication written during a transaction that later rolls back stays stored and is delivered on resubmission. The driver blocks, so calls from an I/O thread fail with an `IllegalStateException`. Deleting completed publications runs in transactions of at most 1000 nodes each.
+
+A node without status, written by Spring Modulith 1.x, has the status `COMPLETED` when it has a completion date and `FAILED` otherwise, see <<rows-without-status>>.
+
+include::includes/quarkus-modulith-events-neo4j.adoc[leveloffset=+2, opts=optional]
+
+[[rows-without-status]]
+== Rows without status
+
+Spring Modulith 1.x wrote publications without status, and a version 1 table migrated to the version 2 structure keeps them that way. The JDBC (version 2) and Neo4j stores give such a row one status everywhere: `COMPLETED` with a completion date, `FAILED` without. It reads as that status, and `findFailedPublications`, claims, `findByStatus`, `countByStatus` and the outbox drain's reads treat it as that status. This matches how Spring Modulith 2.1.2 resubmits these rows: its `findFailedPublications` returns them, its status updates accept them, and its staleness monitor, which watches `PUBLISHED`, `PROCESSING` and `RESUBMITTED`, leaves them alone. So `FailedEventPublications.resubmit(...)` delivers them again, as does every resubmission of incomplete publications. Spring Modulith's own getters report such a row as `PROCESSING` (JDBC) or `PUBLISHED` (Neo4j), a value nothing in it depends on. The contract `MissingStatusContract` of `quarkus-modulith-events-tck` checks the rule.
+
+== Tested databases
+
+The contract of `quarkus-modulith-events-tck` runs in the build against:
+
+* JDBC: H2, HSQLDB, PostgreSQL 18.7, MySQL 8.4.13, MariaDB 11.8.9, SQL Server 2022 CU28 and Oracle Database Free 23.26.3 (lite), each with both table structures and in `update` and `archive` completion mode. On the version 1 structure the contract tests that need the status, attempts or resubmission columns are skipped.
+* MongoDB 7.0.48 as a replica set, with and without JTA transactions, in `update` and `archive` mode, with both identifier representations.
+* Neo4j 5.26.33 in `update` and `archive` mode.
+
+The containers run the vendors' official images (Docker Official Images, `mcr.microsoft.com` and `container-registry.oracle.com`) with pinned tags.

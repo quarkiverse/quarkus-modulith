@@ -1,0 +1,44 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Description
+|Takes and completes orders.
+|Base package
+|`io.quarkiverse.modulith.deployment.docs.fixtures.app.order`
+|Components
+|_Services_
+
+* `i.q.m.d.d.f.a.o.OrderService`
+
+_Configuration mappings_
+
+* `i.q.m.d.d.f.a.o.OrderConfig`
+* `i.q.m.d.d.f.a.o.Settings`
+* `i.q.m.d.d.f.a.o.Timeouts`
+
+_Others_
+
+* `i.q.m.d.d.f.a.o.OrderInit`
+* `i.q.m.d.d.f.a.o.OrderView` (via `i.q.m.d.d.f.a.o.internal.OrderViewImpl`)
+|Bean references
+|* `i.q.m.d.d.f.a.c.Catalog` (in Catalog)
+|Published events
+|* `i.q.m.d.d.f.a.o.OrderCancelled` created by:
+** `i.q.m.d.d.f.a.o.OrderService.cancel(…)`
+* `i.q.m.d.d.f.a.o.OrderCompleted` created by:
+** `i.q.m.d.d.f.a.o.OrderService.complete()`
+
+|Properties
+|* `io.quarkiverse.modulith.deployment.docs.fixtures.app.order.Settings.blank` -- `java.lang.String`
+* `io.quarkiverse.modulith.deployment.docs.fixtures.app.order.Settings.unnamed` -- `int`
+* `shop.explicit` -- `java.lang.String`
+* `shop.flag` -- `boolean`, default `true`
+* `shop.order.backup.daily` -- `int`
+* `shop.order.limits.daily` -- `int`
+* `shop.order.max-size` -- `int`, default `5`. The largest order.
+* `shop.order.mode` -- `java.lang.String`
+* `shop.order.note` -- `java.util.Optional<java.lang.String>`
+* `shop.order.region-code` -- `java.lang.String`
+* `shop.order.tags` -- `java.util.List<java.lang.String>`
+* `shop.retry` -- `int`, default `3`
+* `shop.timeout` -- `java.time.Duration`
+|===

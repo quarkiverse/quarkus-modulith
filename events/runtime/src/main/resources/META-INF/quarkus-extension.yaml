@@ -1,0 +1,15 @@
+name: Modulith Events
+description: "Event publication registry core of Quarkus Modulith, shared by the persistence and externalization extensions"
+metadata:
+  keywords:
+    - modulith
+    - events
+    - outbox
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/events.html
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  config:
+    - "quarkus.modulith.events."
+
+  unlisted: true

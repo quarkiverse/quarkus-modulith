@@ -1,0 +1,74 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events-mongodb_quarkus-modulith-events-mongodb-transaction-management-enabled]] [.property-path]##link:#quarkus-modulith-events-mongodb_quarkus-modulith-events-mongodb-transaction-management-enabled[`+++quarkus.modulith.events.mongodb.transaction-management.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.mongodb.transaction-management.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether publications are written in the MongoDB transaction of the business transaction: the client session MongoDB with Panache binds to a `@Transactional` method. Needs `quarkus-mongodb-panache` and a replica set. Without Panache every publication is written on its own. Takes effect at build time.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_MONGODB_TRANSACTION_MANAGEMENT_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_MONGODB_TRANSACTION_MANAGEMENT_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a| [[quarkus-modulith-events-mongodb_quarkus-modulith-events-mongodb-database]] [.property-path]##link:#quarkus-modulith-events-mongodb_quarkus-modulith-events-mongodb-database[`+++quarkus.modulith.events.mongodb.database+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.mongodb.database+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The database of the `event_publication` and `event_publication_archive` collections. Defaults to `quarkus.mongodb.database`, the database MongoDB with Panache uses.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_MONGODB_DATABASE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_MONGODB_DATABASE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++${quarkus.mongodb.database:modulith}+++`
+
+a| [[quarkus-modulith-events-mongodb_quarkus-modulith-events-mongodb-uuid-representation]] [.property-path]##link:#quarkus-modulith-events-mongodb_quarkus-modulith-events-mongodb-uuid-representation[`+++quarkus.modulith.events.mongodb.uuid-representation+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.mongodb.uuid-representation+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How publication identifiers are stored. `standard` (binary subtype 4) by default. Use `java-legacy` to read collections written by Spring Boot applications that kept Spring Boot's default.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_MONGODB_UUID_REPRESENTATION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_MONGODB_UUID_REPRESENTATION+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`unspecified`, `standard`, `c-sharp-legacy`, `java-legacy`, `python-legacy`
+|`+++standard+++`
+
+|===
+

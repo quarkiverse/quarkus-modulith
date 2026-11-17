@@ -1,0 +1,156 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-observability_quarkus-modulith-observability-enabled]] [.property-path]##link:#quarkus-modulith-observability_quarkus-modulith-observability-enabled[`+++quarkus.modulith.observability.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.observability.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether module observability is active. When off, the build adds no interceptor and no observer, so module calls and events cost nothing extra. Fixed at build time.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_OBSERVABILITY_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_OBSERVABILITY_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-observability_quarkus-modulith-observability-tracing-enabled]] [.property-path]##link:#quarkus-modulith-observability_quarkus-modulith-observability-tracing-enabled[`+++quarkus.modulith.observability.tracing.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.observability.tracing.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether calls into modules open OpenTelemetry spans. Fixed at build time.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_OBSERVABILITY_TRACING_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_OBSERVABILITY_TRACING_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-observability_quarkus-modulith-observability-metrics-enabled]] [.property-path]##link:#quarkus-modulith-observability_quarkus-modulith-observability-metrics-enabled[`+++quarkus.modulith.observability.metrics.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.observability.metrics.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether module invocations are timed and module events counted with Micrometer. Fixed at build time.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a| [[quarkus-modulith-observability_quarkus-modulith-observability-metrics-publications-enabled]] [.property-path]##link:#quarkus-modulith-observability_quarkus-modulith-observability-metrics-publications-enabled[`+++quarkus.modulith.observability.metrics.publications.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.observability.metrics.publications.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to register the gauges. When `false`, no gauge is registered and the store is never counted.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_PUBLICATIONS_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_PUBLICATIONS_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a| [[quarkus-modulith-observability_quarkus-modulith-observability-metrics-publications-refresh-interval]] [.property-path]##link:#quarkus-modulith-observability_quarkus-modulith-observability-metrics-publications-refresh-interval[`+++quarkus.modulith.observability.metrics.publications.refresh-interval+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.observability.metrics.publications.refresh-interval+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How often the gauges count the publications again, each time in a transaction of their own. Scrapes read the last counts and never query the store. Must be positive; turn the gauges off with `enabled` instead.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_PUBLICATIONS_REFRESH_INTERVAL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_PUBLICATIONS_REFRESH_INTERVAL+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-observability_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++30S+++`
+
+a| [[quarkus-modulith-observability_quarkus-modulith-observability-metrics-publications-include-completed]] [.property-path]##link:#quarkus-modulith-observability_quarkus-modulith-observability-metrics-publications-include-completed[`+++quarkus.modulith.observability.metrics.publications.include-completed+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.observability.metrics.publications.include-completed+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to count the completed publications too. In the `update` completion mode they are kept and grow with every event, so counting them scans an ever larger table and is off by default.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_PUBLICATIONS_INCLUDE_COMPLETED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_OBSERVABILITY_METRICS_PUBLICATIONS_INCLUDE_COMPLETED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-modulith-observability_quarkus-modulith]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

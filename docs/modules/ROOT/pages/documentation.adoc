@@ -1,0 +1,135 @@
+= Documentation, endpoint and Dev UI
+
+include::./includes/attributes.adoc[]
+
+Quarkus Modulith writes the documentation Spring Modulith's `Documenter` writes: C4 or UML component diagrams, a canvas per module, an aggregating document and the module metadata. The build writes it for the running application, and a `Documenter` writes it from a plain test.
+
+== Generated documentation
+
+When the application is packaged, the build writes to `target/modulith-docs` (`quarkus.modulith.docs.output-directory`):
+
+[cols="1,3"]
+|===
+|File |Content
+
+|`components.puml`
+|PlantUML component diagram of all modules, C4 style by default.
+
+|`module-<id>.puml`
+|One diagram per module with the modules it depends on.
+
+|`module-<id>.adoc`
+|The module canvas: description (from the package Javadoc), base package, components grouped by role, bean references, aggregate roots, value types, published events with the methods creating them, events listened to, configuration properties.
+
+|`all-docs.adoc`
+|Includes every diagram and canvas.
+
+|`application-modules.json`
+|The module metadata in the format of Spring Modulith's `ApplicationModulesExporter.toFullJson()`.
+
+|`components.mmd`, `modules.md`
+|A Mermaid diagram of all modules and an overview that renders on GitHub and GitLab. Quarkus extras.
+|===
+
+The directory is emptied first (`quarkus.modulith.docs.clean`). It must be a sub-directory of the build output: an absolute path, `.` or a path that leaves the build output with `..` fails the build, so that cleaning can never delete sources. Copy the files elsewhere, for example to `src/docs`, in a later build step. Tests and dev mode write nothing, unless `quarkus.modulith.docs.dev-mode=true`. `quarkus.modulith.docs.enabled=false` skips the documentation.
+
+The diagrams and canvases are configured with `quarkus.modulith.docs.diagram.*` (style, dependency depth, dependency types, modules without relationships) and `quarkus.modulith.docs.canvas.*` (groupings, internals, empty rows, Javadoc base URL). See xref:config-reference.adoc[].
+
+=== Javadoc
+
+Canvases show the Javadoc of modules, beans, events and listener methods when `quarkus-modulith-apt` runs during compilation. It writes `META-INF/quarkus-modulith/javadoc.json`, in the format of Spring Modulith's `SpringModulithProcessor`:
+
+[source,xml]
+----
+<plugin>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <configuration>
+        <annotationProcessorPaths>
+            <path>
+                <groupId>io.quarkiverse.modulith</groupId>
+                <artifactId>quarkus-modulith-apt</artifactId>
+                <version>${quarkus-modulith.version}</version>
+            </path>
+        </annotationProcessorPaths>
+    </configuration>
+</plugin>
+----
+
+=== Components
+
+Beans are grouped by role. The default groups are the jMolecules ones (CQRS, hexagonal, layered and onion architecture annotations, matched by name), then REST resources (`@Path`, `@Route`), services (jMolecules `@Service`, or `*Service`), repositories (Panache, Jakarta Data, jMolecules), event listeners, configuration mappings (`@ConfigMapping`, `@ConfigProperty`), scheduled jobs and messaging endpoints. `quarkus.modulith.docs.canvas.groupings=spring` uses Spring Modulith's group names instead.
+
+Configuration properties come from the `@ConfigMapping` interfaces of a module, with nested groups, `@WithName`, `@WithDefault` and the Javadoc of the methods, and from `@ConfigProperty` injection points. The build reads them from the Jandex index, and the `Documenter` of a plain test from the module types, which it loads with the context class loader without initializing them, so both canvases list the same properties.
+
+== The Documenter
+
+Add `quarkus-modulith-documenter` with `test` scope and write the documentation from a test, as with Spring Modulith:
+
+[source,java]
+----
+new Documenter(ApplicationModules.of(Application.class))
+        .writeModulesAsPlantUml()
+        .writeIndividualModulesAsPlantUml()
+        .writeModuleCanvases()
+        .writeAggregatingDocument();
+----
+
+Every method and option of Spring Modulith 2.1.2 exists:
+
+* `writeDocumentation()`, `writeModulesAsPlantUml()`, `writeIndividualModulesAsPlantUml()`, `writeModuleAsPlantUml(module)`, `writeModuleCanvases()`, `writeAggregatingDocument()` and `writeModuleMetadata()`, each also with options.
+* `DiagramOptions`: `withDependencyDepth`, `withExclusions`, `withComponentFilter`, `withTargetOnly`, `withTargetFileName`, `withColorSelector`, `withDefaultDisplayName`, `withStyle` (`DiagramStyle.C4`, `DiagramStyle.UML`), `withElementsWithoutRelationships`, `withSkinParam`, `withDependencyTypes`.
+* `CanvasOptions`: `defaults`, `withoutDefaultGroupings`, `groupingBy`, `revealInternals`, `revealEmptyLines`, `withApiBase`, `withTargetFileName`, with `Grouping.of`, `nameMatching`, `implementing`, `subtypeOf`, `isAnnotatedWith` and the `JMoleculesGroupings`, `SpringGroupings` and `QuarkusGroupings`.
+* `DocumenterOptions` (Spring Modulith's `Documenter.Options`): `withOutputFolder`, `withoutClean`. The default folder is `target/modulith-docs`. `withOutput(DocumentationOutput)` writes the diagrams, canvases and aggregating document elsewhere; the module metadata of `writeModuleMetadata()`, which `writeDocumentation()` calls, still goes to `target/classes` (`build/resources/main` without a `pom.xml`).
+
+Kept from Spring Modulith:
+
+* A documenter builds its diagram model on the first diagram it writes. The display names of that call's `withDefaultDisplayName` and the colors of its `withColorSelector` stay for every later diagram of the same documenter, so use a new `Documenter` for other names or colors.
+* `withTargetFileName("diagram-%s.puml")` also names the diagram of all modules, unformatted: it is written to `diagram-%s.puml`, which `all-docs.adoc` includes.
+
+In a plain test the canvases have no "Scheduled jobs" and "Messaging endpoints" groups: the core model does not carry the method annotations those groups need. The build output has them.
+
+The parity tests run Spring Modulith 2.1.2 and this documenter on the same fixtures and compare every file.
+
+=== Differences from Spring Modulith
+
+* Options are top-level types: `Documenter.DiagramOptions` becomes `DiagramOptions`, `Documenter.Options` becomes `DocumenterOptions`, and so on. Component filters receive a `DiagramComponent`, groupings a `ModuleBean`.
+* The canvas row "Spring components" is called "Components", and the default groups have Quarkus names.
+* Spring Modulith orders diagram relationships and listener methods by hash codes, so their order changes between runs. Quarkus Modulith writes them in module order.
+* Writing the same diagram twice with one `DiagramOptions` instance works; Spring Modulith rejects the second view.
+* The module metadata goes to `META-INF/quarkus-modulith/application-modules.json`.
+* With `clean`, on by default, the documenter refuses to empty a file system root, the working directory or one of its ancestors, a folder holding a `pom.xml`, `build.gradle` or `build.gradle.kts`, and, inside the working directory, anything but a sub-folder of `target` or `build`. `withOutputFolder("")` fails. Spring Modulith empties any folder.
+
+== The `/q/modulith` endpoint
+
+With an HTTP extension, `/q/modulith` returns the module model in the JSON format of Spring Modulith's `/actuator/modulith`: per module the display name, base package, parent, nested modules, type, shared flag, allowed dependencies and dependencies with their types. The JSON is computed at build time. `quarkus.modulith.endpoint.path` changes the path.
+
+The JSON maps the internals of the application, so the endpoint is served in dev and test mode only. A packaged application serves it only with `quarkus.modulith.endpoint.enabled=true`, as Spring Boot exposes `/actuator/modulith` over HTTP only when it is listed in `management.endpoints.web.exposure.include`. `quarkus.modulith.endpoint.enabled=false` removes it in every mode.
+
+When you serve it in production, protect it. Either move it to the management interface, which listens on its own port (9000 by default) that you keep off the public network:
+
+[source,properties]
+----
+quarkus.modulith.endpoint.enabled=true
+quarkus.management.enabled=true
+----
+
+or require authentication on the path with a security extension:
+
+[source,properties]
+----
+quarkus.modulith.endpoint.enabled=true
+quarkus.http.auth.permission.modulith.paths=/q/modulith
+quarkus.http.auth.permission.modulith.policy=authenticated
+----
+
+== Dev UI
+
+In dev mode the Modulith card has these pages:
+
+Modules:: the modules with their base package, dependencies, allowed dependencies, named interfaces and events.
+Module graph:: a force graph of the modules and their dependencies.
+Violations:: the violations found by the last build. With the default `fail` mode the build stops instead, so this page matters in `warn` mode.
+Listeners:: the `@ApplicationModuleListener` methods, their event types and delivery mode.
+Initializers:: the `ApplicationModuleInitializer` beans per module.
+Incomplete publications:: with an event publication store, the incomplete publications, with buttons to submit one or all of them again.
+Mermaid:: the Mermaid source of the module diagram.

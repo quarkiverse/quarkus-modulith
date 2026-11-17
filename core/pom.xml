@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.quarkiverse.modulith</groupId>
+        <artifactId>quarkus-modulith-parent</artifactId>
+        <version>999-SNAPSHOT</version>
+    </parent>
+    <artifactId>quarkus-modulith-core</artifactId>
+    <name>Quarkus Modulith - Core</name>
+    <description>The application module model and its verification, usable without starting Quarkus</description>
+
+    <properties>
+        <jmolecules-bom.version>2025.0.2</jmolecules-bom.version>
+        <spring-modulith.version>2.1.2</spring-modulith.version>
+        <!-- The Spring versions Spring Modulith 2.1.2 is built against, for the parity tests only -->
+        <spring-boot.version>4.1.2</spring-boot.version>
+        <spring-framework.version>7.0.9</spring-framework.version>
+        <spring-data.version>4.1.1</spring-data.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jmolecules</groupId>
+                <artifactId>jmolecules-bom</artifactId>
+                <version>${jmolecules-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.quarkiverse.modulith</groupId>
+            <artifactId>quarkus-modulith-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!--
+            Only the model analysis (ApplicationModules.of and the build step) reads class files. The runtime builds
+            the model from recorded data, so the Quarkus runtime does not get ASM through this artifact.
+        -->
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- Additional verifications (VerificationOptions) and ArchUnit-typed filters, in plain tests only -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
+            <version>${archunit.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <!-- The jMolecules rules run by default when this library is on the class path, like in Spring Modulith -->
+        <dependency>
+            <groupId>org.jmolecules.integrations</groupId>
+            <artifactId>jmolecules-archunit</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!--
+            Test dependencies. The fixtures also use stand-ins for a few annotations and types of Quarkus, SmallRye,
+            MicroProfile, Jakarta Data and Jakarta Validation, under src/test/java in the vendors' packages, so that the
+            core stays free of Quarkus dependencies. They only carry the names the analysis matches. Delete a stand-in
+            when the real artifact is added to the test class path, or the result depends on the class path order.
+        -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Parity tests: the same fixtures analysed by Spring Modulith 2.1.2 -->
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-core</artifactId>
+            <version>${spring-modulith.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+            <version>${spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>${spring-framework.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+            <version>${spring-data.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-ddd</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-events</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-hexagonal-architecture</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-layered-architecture</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-onion-architecture</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>**/SourceFactoryParityTest.java</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <!-- Source factories registered on the class path apply to every model, so they get a JVM of their own -->
+                    <execution>
+                        <id>source-factories</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                        <configuration>
+                            <excludes combine.self="override" />
+                            <includes>
+                                <include>**/SourceFactoryParityTest.java</include>
+                            </includes>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.basedir}/src/test/factory-resources</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

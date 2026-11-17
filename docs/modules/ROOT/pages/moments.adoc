@@ -1,0 +1,225 @@
+= Moments
+
+include::./includes/attributes.adoc[]
+
+`quarkus-modulith-moments` publishes passage of time events, the port of Spring Modulith's `spring-modulith-moments`. Instead of a scheduled job per business rule ("close the books at the end of every quarter"), a module listens to an event that says the quarter has passed. The idea comes from Mathias Verraes' https://verraes.net/2019/05/patterns-for-decoupling-distsys-passage-of-time-event/[Passage of Time Event] pattern.
+
+== Dependency
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-moments</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+The extension brings `quarkus-scheduler` and `org.jmolecules:jmolecules-events`. Jackson is optional, see <<jackson>>.
+
+== The events
+
+All events live in `io.quarkiverse.modulith.moments` and implement jMolecules' `org.jmolecules.event.types.DomainEvent`, as in Spring Modulith.
+
+[cols="2,3,3"]
+|===
+|Event |Published |Carries
+
+|`SecondHasPassed` |every second, with `granularity=seconds` |`getTime()`, the start of the second that passed
+|`MinuteHasPassed` |every minute, with `granularity=seconds` or `minutes` |`getTime()`, the start of the minute that passed
+|`HourHasPassed` |every hour, unless `granularity=days` |`getTime()`, the start of the hour that passed
+|`DayHasPassed` |every midnight |`getDate()`
+|`WeekHasPassed` |at midnight after the last day of a week of the configured locale |`getYear()` (week-based year), `getWeek()`, `getStartDate()`, `getEndDate()`
+|`MonthHasPassed` |at midnight after the last day of a month |`getMonth()` (`YearMonth`)
+|`QuarterHasPassed` |at midnight after the last day of a quarter of the fiscal year |`getYear()`, `getQuarter()` (`ShiftedQuarter`), `getStartDate()`, `getEndDate()`
+|`YearHasPassed` |at midnight after December 31st |`getYear()`
+|===
+
+Each event describes the period that has just ended: at 14:00 the hourly job publishes `HourHasPassed` for 13:00. The events of one midnight come in the order day, week, month, quarter, year.
+
+Each event is published on its own. When a synchronous observer of one event throws, `Moments` logs the failure at ERROR with the event (for example `DayHasPassed[2026-12-31]`) and goes on with the next one, so a failing day listener does not cost the `MonthHasPassed`, `QuarterHasPassed` and `YearHasPassed` of the same midnight. The same holds for `TimeMachine.shiftBy`. The failed event is not published again.
+
+React to them like to any other event, with `@ApplicationModuleListener` or a CDI observer:
+
+[source,java]
+----
+public class Invoicing {
+
+    @ApplicationModuleListener
+    void on(MonthHasPassed event) {
+        invoices.createFor(event.getMonth());
+    }
+
+    @ApplicationModuleListener
+    void on(QuarterHasPassed event) {
+        reports.close(event.getStartDate(), event.getEndDate());
+    }
+}
+----
+
+`Moments` fires the events through a CDI `Event<Object>`, so module listeners, the event publication registry (when a store is present) and externalization apply as for events your own code fires.
+
+[[weeks]]
+=== Weeks
+
+Which day ends a week, and how weeks are numbered, comes from `WeekFields.of(locale)` of `quarkus.modulith.moments.locale`. With `en-US`, weeks run from Sunday to Saturday and `WeekHasPassed` arrives after Saturday. With `de-DE` (ISO weeks), they run from Monday to Sunday. The year of the event is the week-based year, so with `de-DE` the week from December 28th 2026 to January 3rd 2027 is week 53 of 2026.
+
+IMPORTANT: A native executable only contains the locale data of `quarkus.locales`, which defaults to the locale of the build machine. List the locale of `quarkus.modulith.moments.locale` there, for example `quarkus.locales=en-US,de-DE`, or weeks may follow the rule of another locale without any error. The extension logs a warning at startup when the configured locale is not available.
+
+=== Quarters and fiscal years
+
+`Quarter` is a calendar quarter (`Q1` to `Q4`). `ShiftedQuarter` moves it to a fiscal year that starts in `quarter-start-month`. With `quarter-start-month=april`, `Q1` runs from April to June and `Q4` from January to March. A fiscal year is identified by the calendar year it starts in: the quarter that ends on March 31st 2027 is `QuarterHasPassed.of(Year.of(2026), Quarter.Q4, Month.APRIL)`, and its `getStartDate()` is January 1st 2027.
+
+== `Now`
+
+Inject `io.quarkiverse.modulith.moments.support.Now` wherever code needs the current time, instead of calling `LocalDateTime.now()`:
+
+[source,java]
+----
+@Inject
+Now now;
+
+LocalDateTime time = now.now();   // in the configured zone
+LocalDate date = now.today();
+Instant instant = now.instant();
+----
+
+The `Moments` bean implements `Now`, so a shift of the time machine is visible to that code too.
+
+== Configuration
+
+[cols="3,3,1,1"]
+|===
+|Quarkus |Spring Modulith |Default |Phase
+
+|`quarkus.modulith.moments.enabled` |`spring.modulith.moments.enabled` |`true` |build
+|`quarkus.modulith.moments.enable-time-machine` |`spring.modulith.moments.enable-time-machine` |`false` |build
+|`quarkus.modulith.moments.granularity` (`seconds`, `minutes`, `hours`, `days`) |`spring.modulith.moments.granularity` (`hours`, `days`; 2.2 adds `minutes`, `seconds`) |`hours` |runtime
+|`quarkus.modulith.moments.zone-id` |`spring.modulith.moments.zone-id` |`UTC` |runtime
+|`quarkus.modulith.moments.locale` |`spring.modulith.moments.locale` |the JVM default, fixed at build time in a native executable |runtime
+|`quarkus.modulith.moments.quarter-start-month` |`spring.modulith.moments.quarter-start-month` |`january` |runtime
+|`quarkus.modulith.moments.jobs.enabled` |none |`true` |runtime
+|===
+
+`enabled` and `enable-time-machine` decide which beans the build registers, so changing them needs a rebuild. With `enabled=false` there is no `Moments`, `TimeMachine` or `Now` bean and no job. The other settings are read when the application starts.
+
+At startup the extension registers one Quarkus scheduler job per unit the granularity includes (`modulith-moments-seconds`, `-minutes`, `-hours`, `-days`). Each job uses a Quartz cron expression (the default `quarkus.scheduler.cron-type`) in the configured zone, so the daily job runs at midnight of `zone-id`, and skips an execution while the previous one still runs. The extension forces the scheduler to start. When `quarkus.scheduler.enabled=false`, no job is registered and the time machine still works.
+
+Set `quarkus.modulith.moments.locale` explicitly, and in a native executable list it in `quarkus.locales` (see <<weeks>>). Without it the week rule comes from the default locale, which a native executable takes from the machine that built it, so the JVM and native builds of the same application could disagree on where a week ends.
+
+There is no catch-up. A tick that does not happen, because the application is stopped at midnight or is being deployed at the end of the month, is not published later, and neither are the week, month, quarter or year events that midnight would have carried. A listener that must not miss a period checks at startup whether the last period it handled is the one before the current one.
+
+[[clusters]]
+=== Several instances
+
+WARNING: Moments publishes from every instance of the application. With three replicas, every `DayHasPassed`, `MonthHasPassed` and `QuarterHasPassed` is published three times, and a listener that closes the quarter runs three times. Spring Modulith behaves the same.
+
+Either let a single instance publish, by setting `quarkus.modulith.moments.jobs.enabled=false` (or `QUARKUS_MODULITH_MOMENTS_JOBS_ENABLED=false`) on all the others, for example a separate deployment of one replica with the jobs on, or make the listeners idempotent, for example by recording the period they handled and skipping one they have already seen. With the jobs off, an instance publishes no event on its own, and `Now` and the time machine still work. At startup the extension logs whether this instance publishes.
+
+Hours are local times of `zone-id`, computed like Spring Modulith with `LocalDateTime` arithmetic. Across daylight saving transitions this means, for `Europe/Berlin`:
+
+* Spring forward (March 29th 2026, 02:00 becomes 03:00): the hourly job at 03:00 publishes `HourHasPassed` for 02:00, an hour that did not exist on the wall clock, and no event covers the real hour from 01:00 to 03:00 as one.
+* Fall back (October 25th 2026, 03:00 becomes 02:00): the hourly jobs at 02:00 CEST and at 02:00 CET both publish `HourHasPassed` for 01:00, and the hour from 02:00 to 03:00 is published once.
+* `TimeMachine.shiftBy` counts local hours the same way: two real hours across the spring transition publish 01:00, 02:00 and 03:00, across the autumn transition only 02:00.
+
+Use `UTC`, the default, when every hour must be published exactly once.
+
+include::includes/quarkus-modulith-moments.adoc[leveloffset=+1, opts=optional]
+
+== The time machine in tests
+
+Set `enable-time-machine` in the test profile:
+
+[source,properties]
+----
+%test.quarkus.modulith.moments.enable-time-machine=true
+----
+
+The `Moments` bean is then a `TimeMachine`, injectable as `TimeMachine`, `Moments` or `Now`. `shiftBy(Duration)` moves the time forward and fires every event of the boundaries it passes, in chronological order, synchronously on the calling thread (module listeners still run as configured, asynchronously by default). A negative duration moves the time backward and fires nothing. `reset()` drops every shift.
+
+[source,java]
+----
+@QuarkusTest
+class InvoicingTest {
+
+    @Inject
+    TimeMachine timeMachine;
+
+    @Test
+    void createsTheInvoicesAtTheEndOfTheMonth() {
+        timeMachine.shiftBy(Duration.ofDays(31));
+
+        await().untilAsserted(() -> assertThat(invoices.count()).isEqualTo(1));
+    }
+}
+----
+
+The scheduler jobs keep running with the time machine. For tests that assert exact event lists, set `quarkus.scheduler.enabled=false` or use `granularity=days` so a real tick cannot add an event.
+
+== A custom clock
+
+By default the time comes from `Clock.systemUTC()`. Declare a `java.time.Clock` bean to replace it, for example a fixed or mutable clock in tests:
+
+[source,java]
+----
+@Singleton
+public class TestClock extends Clock {
+
+    private final AtomicReference<Instant> instant;
+    private final ZoneId zone;
+
+    public TestClock() {
+        this(new AtomicReference<>(Instant.parse("2026-03-31T22:00:00Z")), ZoneOffset.UTC);
+    }
+
+    private TestClock(AtomicReference<Instant> instant, ZoneId zone) {
+        this.instant = instant;
+        this.zone = zone;
+    }
+
+    public void set(Instant instant) {
+        this.instant.set(instant);
+    }
+
+    @Override
+    public Instant instant() {
+        return instant.get();
+    }
+
+    @Override
+    public ZoneId getZone() {
+        return zone;
+    }
+
+    @Override
+    public Clock withZone(ZoneId zone) {
+        return new TestClock(instant, zone);
+    }
+}
+----
+
+The clock is resolved once, when the `Moments` bean is created. Its zone is ignored, local times and dates use `zone-id`. Two `Clock` beans without a way to choose between them fail with an ambiguous resolution error.
+
+[[jackson]]
+== Jackson
+
+When the application uses `quarkus-jackson`, the extension registers `MomentsJacksonModule` on the application's mapper (an `ObjectMapperCustomizer` with Jackson 2 on Quarkus 3, a `JsonMapperBuilderCustomizer` with Jackson 3 on Quarkus 4), so the events can be stored by the event publication registry and externalized. The module uses mix-ins, as Spring Modulith 2.1 does, and writes the same properties: for example `{"year":2026,"quarter":{"quarter":"Q1","startMonth":1}}` for a `QuarterHasPassed` with Jackson 3. Register `new MomentsJacksonModule()` yourself on a mapper you create. Without Jackson, nothing is registered. The event types are registered for reflection in native executables in both cases, and also with `enabled=false`, so publications of moments stored while the feature was on can still be read.
+
+Jackson 2 (Quarkus 3) and Jackson 3 (Quarkus 4) write some properties differently: `"year":"2026"`, `"locale":"en_US"` and `"startMonth":"JANUARY"` with Jackson 2, `"year":2026`, `"locale":"en-US"` and `"startMonth":1` with Jackson 3. Jackson 3 reads both forms, so publications stored before an upgrade to Quarkus 4 are read after it.
+
+== Differences from Spring Modulith
+
+* Configuration names start with `quarkus.modulith.moments` instead of `spring.modulith.moments`. `enabled` and `enable-time-machine` are build-time properties.
+* `granularity` also accepts `minutes` and `seconds`, with `MinuteHasPassed` and `SecondHasPassed`, which Spring Modulith adds in 2.2.
+* Jobs are registered programmatically with the Quarkus scheduler, in the configured zone. Spring's `@Scheduled(cron = "@daily")` runs at midnight of the JVM's zone.
+* `jobs.enabled` turns the jobs off on an instance, so that only one instance of a cluster publishes (see <<clusters>>). Spring Modulith has no such switch.
+* An observer that throws on one event does not stop the other events of the same moment. In Spring Modulith a failing `DayHasPassed` listener also loses the week, month, quarter and year events of that day.
+* `MomentsProperties` is a plain value object. Create one with `MomentsProperties.defaults()` and the `with…` methods, or `MomentsProperties.of(…)`; there is no `DEFAULTS` constant, because the default locale must not be frozen into a native image.
+* `Moments` and `TimeMachine` take a CDI `Event<Object>` instead of an `ApplicationEventPublisher`. `TimeMachine.shiftBy` and `reset` return the `TimeMachine`.
+* `QuarterHasPassed` adds `getYear()` and `getQuarter()`, `ShiftedQuarter` adds `getStartMonth()`.
+* Fixed behavior:
+** `TimeMachine.shiftBy` with hourly granularity publishes the hour that has passed (shifting from 13:30 to 14:30 publishes 13:00), like the hourly job. Spring publishes the hour that starts.
+** With daily granularity, `shiftBy` publishes a day only when midnight is passed. Spring stepped from the current hour by whole days and could publish a day that had not ended.
+** `ShiftedQuarter` ends on the last day of its third month. Spring kept the day of the unshifted end, so with `quarter-start-month=february` the second quarter ended on July 30th and July 31st belonged to no quarter (`getShiftedQuarter` threw `IllegalStateException`). A quarter ending in February ends on the 28th or 29th depending on the year.
+** The year of `QuarterHasPassed` is the year the fiscal year starts in, which is what `getStartDate()` and `getEndDate()` assume. For a quarter that ends in January, Spring used the calendar year of the end, so the dates pointed a year ahead.
+** `WeekHasPassed.getStartDate()` returns the first day of the week of the event's locale and uses week-based years, matching how the event is computed. Spring always returned a Monday and used the plain week of year. Weeks are therefore between 1 and 53; Spring also accepted 0.

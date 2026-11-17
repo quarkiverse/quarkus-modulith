@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.quarkiverse.modulith</groupId>
+        <artifactId>quarkus-modulith-parent</artifactId>
+        <version>999-SNAPSHOT</version>
+    </parent>
+    <artifactId>quarkus-modulith-documenter</artifactId>
+    <name>Quarkus Modulith - Documenter</name>
+    <description>Writes module documentation (C4 and UML PlantUML, Mermaid, module canvases) from a plain test</description>
+
+    <properties>
+        <spring-modulith.version>2.1.2</spring-modulith.version>
+        <spring-boot.version>4.1.2</spring-boot.version>
+        <jmolecules.version>2.0.1</jmolecules.version>
+        <spring-framework.version>7.0.9</spring-framework.version>
+        <json-path.version>2.10.0</json-path.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.quarkiverse.modulith</groupId>
+            <artifactId>quarkus-modulith-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Optional in the core: reads the class files when Documenter(Class) or ApplicationModules.of analyzes the
+             application in a plain test -->
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Spring Modulith 2.1.2 runs the same fixtures for the parity tests -->
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-docs</artifactId>
+            <version>${spring-modulith.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
+            <artifactId>spring-modulith-events-api</artifactId>
+            <version>${spring-modulith.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+            <version>${spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring-framework.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>${json-path.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- The configuration annotations of the fixtures whose canvases list properties -->
+        <dependency>
+            <groupId>io.smallrye.config</groupId>
+            <artifactId>smallrye-config-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.config</groupId>
+            <artifactId>microprofile-config-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-ddd</artifactId>
+            <version>${jmolecules.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-events</artifactId>
+            <version>${jmolecules.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jmolecules</groupId>
+            <artifactId>jmolecules-hexagonal-architecture</artifactId>
+            <version>${jmolecules.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

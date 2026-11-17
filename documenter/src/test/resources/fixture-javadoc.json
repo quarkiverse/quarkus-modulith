@@ -1,0 +1,23 @@
+[ {
+  "name" : "io.quarkiverse.modulith.docs.fixtures.shop.catalog.Catalog",
+  "comment" : "The products we sell."
+}, {
+  "name" : "io.quarkiverse.modulith.docs.fixtures.shop.inventory.InventoryManagement",
+  "methods" : [ {
+    "name" : "on",
+    "signature" : "on(io.quarkiverse.modulith.docs.fixtures.shop.order.OrderCompleted)",
+    "comment" : "Reserves the stock of a completed {@link io.quarkiverse.modulith.docs.fixtures.shop.order.OrderCompleted}."
+  } ]
+}, {
+  "name" : "io.quarkiverse.modulith.docs.fixtures.shop.order",
+  "comment" : "Takes orders. <p>Completes them.</p> One<br>Two"
+}, {
+  "name" : "io.quarkiverse.modulith.docs.fixtures.shop.order.Order",
+  "comment" : "An order."
+}, {
+  "name" : "io.quarkiverse.modulith.docs.fixtures.shop.order.OrderCompleted",
+  "comment" : "Published when an {@code Order} completes."
+}, {
+  "name" : "io.quarkiverse.modulith.docs.fixtures.shop.order.OrderManagement",
+  "comment" : "Manages {@link io.quarkiverse.modulith.docs.fixtures.shop.order.Order#id}."
+} ]

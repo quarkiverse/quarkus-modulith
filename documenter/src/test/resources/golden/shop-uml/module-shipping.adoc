@@ -1,0 +1,11 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`io.quarkiverse.modulith.docs.fixtures.shop.shipping`
+|Components
+|_Services_
+
+* `i.q.m.d.f.s.s.ShippingService`
+|Bean references
+|* `i.q.m.d.f.s.i.Stock` (in Inventory)
+|===

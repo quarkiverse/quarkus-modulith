@@ -1,0 +1,218 @@
+= Module events and the outbox
+
+include::./includes/attributes.adoc[]
+
+== Listening to another module
+
+Fire events with a CDI `jakarta.enterprise.event.Event`. Listen with `@ApplicationModuleListener`:
+
+[source,java]
+----
+public class InventoryListener {
+
+    @ApplicationModuleListener
+    void on(OrderPlaced event) {
+        // ...
+    }
+}
+----
+
+A listener method declares exactly one parameter, the event. Its class becomes a `@Singleton` bean if it has no scope. A listener receives events of its parameter type and every subtype, through one CDI observer per listened type that the build registers. Nothing observes the other events of the application, so request and transaction lifecycle events cost nothing.
+
+A listener of `java.lang.Object` receives every event fired without a qualifier (an injected `Event<X>` without qualifiers counts as `@Default`). It never receives qualified events, such as the container's `@Initialized` and `@Destroyed` lifecycle events. Prefer a listener of the narrowest type: an `Object` listener is called for every unqualified event of the application.
+
+Delivery works like Spring Modulith's `@ApplicationModuleListener`, which combines `@Async`, `@Transactional(REQUIRES_NEW)` and `@TransactionalEventListener(AFTER_COMMIT)`:
+
+* when the event is fired inside a transaction, listeners run after the commit, and never if the transaction rolls back or is marked for rollback,
+* when there is no transaction, listeners run right away,
+* listeners run on the listener executor, unless `@ApplicationModuleListener(async = false)`,
+* each listener runs in a new transaction when `quarkus-narayana-jta` is present, with the request context active,
+* an exception in a listener is logged (event type, listener id and publication id; the event itself only at `DEBUG`) and does not reach the publisher.
+
+Events fired on a Vert.x event loop without a transaction (a reactive route, a Vert.x handler) are handed to the listener executor first, so storing publications and synchronous listeners never block the I/O thread. Firing inside a JTA transaction already implies a worker thread.
+
+The dispatcher calls listeners through ArC invokers generated at build time, and a generated bean creates them, so there is no reflection.
+
+=== Attributes
+
+[cols="1,3"]
+|===
+|Attribute |Meaning
+
+|`id`
+|The listener identifier stored with every publication. The default is Spring's: `com.acme.InventoryListener.on(com.acme.OrderPlaced)`, so a table written by Spring Modulith keeps working.
+
+|`async`
+|`false` runs the listener on the thread that completed the publishing transaction.
+
+|`condition`
+|Only events for which the condition holds reach the listener, and only those are stored. See below.
+
+|`propagation`
+|`REQUIRES_NEW` (default) and `REQUIRED` run the listener in a new transaction, since the publishing one has completed. `SUPPORTS`, `NOT_SUPPORTED` and `NEVER` run it without a transaction. `MANDATORY` fails the build: no transaction can exist when the listener runs.
+
+|`readOnlyTransaction`
+|With `quarkus-modulith-events-jpa`, the Hibernate session of the listener's transaction is read-only and never flushed. Without a store it has no effect.
+|===
+
+`@ApplicationModuleListener` can be used as a meta-annotation, at any depth:
+
+[source,java]
+----
+@ApplicationModuleListener(async = false)
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface SynchronousListener {
+}
+----
+
+=== Conditions
+
+Spring Modulith evaluates SpEL. Quarkus Modulith compiles the conditions Spring users write into bytecode at build time, and fails the build for anything else, so a typo never turns into a silently skipped listener:
+
+* the event: `#event`, `event`, `#root.event`, `#root.args[0]`, `args[0]`, `#a0`, `#p0` or `#` and the parameter name,
+* property paths (`#event.customer.vip`, read through `getVip()`, `isVip()` or a record accessor `vip()`) and methods without parameters (`#event.isUrgent()`),
+* number, string (`'EUR'` or `"EUR"`), boolean and `null` literals,
+* `== != < <= > >=` and `eq ne lt le gt ge`, `&& || !` and `and or not`, and parentheses.
+
+Numbers compare by value whatever their type, and an enum equals the string of its name: `#event.state == 'OPEN'`. `and` and `or` short-circuit, so `#event.customer != null and #event.customer.vip` is safe.
+
+A listener bean can also implement `io.quarkiverse.modulith.events.ConditionalEventListener` and decide in `supports(Object event)`. Both checks run before the publication is stored.
+
+=== Executor and shutdown
+
+[cols="1,3"]
+|===
+|Property |Meaning
+
+|`quarkus.modulith.listeners.executor` _(build)_
+|`worker` (default) runs asynchronous listeners on the Quarkus worker pool, `virtual-threads` on one virtual thread each, through `quarkus-virtual-threads`. The listener path holds no lock across I/O and is tested with `@ShouldNotPin`.
+
+|`quarkus.modulith.listeners.shutdown-timeout`
+|At shutdown the dispatcher stops taking deliveries and waits this long (default `2s`, like Spring's `spring.modulith.default-async-termination`) for the running ones. What did not finish stays incomplete in the registry. The number of unfinished and of not started deliveries is logged once.
+
+|`quarkus.modulith.listeners.completion-timing`
+|`in-listener` (default) marks the publication completed inside the listener's transaction, so both commit together. `in-interceptor` completes it in a transaction of its own after the listener's committed, as Spring Modulith 2.1 does. A listener without a transaction always completes afterwards.
+|===
+
+== The event publication registry
+
+Without a registry, an event whose listener fails, or that is lost because the application stops before the listener runs, is gone. Add a store, `quarkus-modulith-events-jpa` for Hibernate ORM, and every delivery goes through the outbox, with Spring Modulith's lifecycle:
+
+. When the event is fired, one publication per listener is stored with status `PUBLISHED`, in the publishing transaction. If that transaction rolls back, the publications go with it.
+. Right before the listener runs, the publication becomes `PROCESSING` and counts one more completion attempt, in a short transaction of its own. A publication that is completed or gone by then is not delivered.
+. When the listener succeeds, the publication is `COMPLETED`, then updated, deleted or archived depending on the completion mode.
+. When it fails, the publication becomes `FAILED`.
+. Submitting a publication again first claims it with one conditional update to `RESUBMITTED`, which only succeeds while the publication is `PUBLISHED` or `FAILED`. A publication another instance claimed or is delivering cannot be claimed, so several instances can share a table without delivering a publication twice through resubmission. A claimed or processing publication whose last publication date (the last resubmission, or else the publication) is older than `quarkus.modulith.events.staleness.processing`, or else `.resubmitted`, or else `republish-older-than` (default `5m`), is taken over, so a delivery whose instance died (killed, out of memory, redeployed) is delivered again, also with the default configuration. The trade-off: a delivery that is still running after that age, for example a listener slower than `republish-older-than`, is taken over too and delivered twice, so delivery is at least once (see <<Delivery guarantees>>). Set `quarkus.modulith.events.staleness.processing` above the duration of the slowest listener. This is stricter than Spring Modulith 2.1.2, whose claim only excludes `RESUBMITTED`.
+. A resubmission that cannot hand the publication to its listener, because the event cannot be read or the dispatcher refuses it, logs a warning and marks the publication `FAILED` with one more attempt, so `abandon-after-attempts` eventually applies to it.
+. Listeners that another component delivers, such as the outbox drain of event externalization, are left out of every resubmission: they declare themselves through a `ResubmissionExclusion` bean.
+
+Completion attempts count deliveries. Spring Modulith 2.1.2 counts differently: one when the publication is stored and one per resubmission, none when processing. Rows a Spring application wrote keep their count after a migration, so `abandon-after-attempts` may see one attempt more for them.
+
+=== Submitting publications again
+
+Inject the API beans:
+
+[cols="1,3"]
+|===
+|Bean |Methods
+
+|`IncompleteEventPublications`
+|`findIncompletePublications()`, `resubmitIncompletePublications(Predicate)`, `resubmitIncompletePublicationsOlderThan(Duration)`, `resubmitIncompletePublications(ResubmissionOptions)`
+
+|`FailedEventPublications`
+|`resubmit(ResubmissionOptions)`: failed publications only, at most `maxInFlight` in flight (`RESUBMITTED` or `PROCESSING`) at a time, one batch of `batchSize`, older than `minAge`, matching the filter. Spring Modulith 2.1.2 counts `RESUBMITTED` only.
+
+|`CompletedEventPublications`
+|`findAll()`, `deletePublications(Predicate)`, `deletePublicationsOlderThan(Duration)`
+
+|`AbandonedEventPublications`
+|`findAll()`, `deletePublications(Predicate)`: publications with `quarkus.modulith.events.resubmission.abandon-after-attempts` attempts, which resubmission and the outbox drain skip, page by page
+|===
+
+Every resubmission and deletion reads the store page by page (`quarkus.modulith.events.republish-batch-size`, default 100, at least 1), in the database, and deserializes an event only when a filter or the listener needs it. A publication whose listener no longer exists is marked `FAILED`, as in Spring Modulith.
+
+=== Jobs
+
+[cols="1,3"]
+|===
+|Property |Meaning
+
+|`quarkus.modulith.events.republish-outstanding-events-on-restart`
+|Resubmits the incomplete publications after startup, in the background, without delaying readiness: every `PUBLISHED` and `FAILED` one, and the claimed or processing ones older than the takeover age above, which a stopped instance left behind. Spring's legacy key, here `quarkus.modulith.republish-outstanding-events-on-restart`, is honored with a warning. With several instances prefer the periodic job: every starting instance would resubmit what the others have not delivered yet.
+
+|`quarkus.modulith.events.republish-interval`, `republish-older-than`
+|Resubmits incomplete publications older than `republish-older-than` (default `5m`) periodically, including claimed or processing ones past the takeover age. Off unless set.
+
+|`quarkus.modulith.events.delete-completed-interval`, `delete-completed-older-than`
+|Deletes completed publications older than `delete-completed-older-than` (default `7d`) periodically. Off unless set.
+
+|`quarkus.modulith.events.staleness.published`, `.processing`, `.resubmitted`, `.check-interval`
+|Marks publications that stayed longer than the threshold in that status `FAILED`, compared with their last publication date (the last resubmission, or else the publication), every `check-interval` (default `1m`, positive). A status without threshold is not monitored. Thresholds must be positive. The monitor also covers the outbox publications of event externalization, so keep `.processing` longer than `externalization.outbox.send-timeout` plus `outbox.stale-after`, or a publication still being sent is marked failed and another instance may send it again.
+|===
+
+The periodic jobs are registered with the programmatic scheduler API and skip a run while the previous one is still going. The first failure of a job is logged at `ERROR`, the following ones at `DEBUG` until it succeeds again. They need `quarkus-scheduler`, which stays optional. The scheduler is only started when the build sees a job interval or a staleness threshold, so set them in `application.properties` (they can still be changed at runtime); a job configured only at runtime, or without `quarkus-scheduler`, logs a warning and does not run. At shutdown the registry lists the publications left unfinished (event type and listener only).
+
+=== Completion modes
+
+`quarkus.modulith.events.completion-mode` _(build, readable at runtime)_: `update` (default) sets the completion date and keeps the row, `delete` removes it, `archive` moves it to `event_publication_archive`, where every query about completed publications looks. The JPA store maps the archive entity in `archive` mode only. In `archive` mode, `CompletedEventPublications.deletePublications(Predicate)` deletes the matching archived publications and returns how many it deleted. This differs from Spring Modulith 2.1.2 on purpose: there, deleting by identifier only touches the publication table, so the call deletes nothing in `archive` mode.
+
+=== CDI transactional observers
+
+With a store present, CDI observers of the application notified after a successful commit, `void on(@Observes(during = TransactionPhase.AFTER_SUCCESS) OrderPlaced event)`, are delivered by the dispatcher too, the way Spring Modulith's registry covers every `@TransactionalEventListener`: their deliveries are stored, completed and resubmitted. They keep their timing (synchronously, right after the commit, without transaction) and get Spring's default listener id. `quarkus.modulith.events.registry-trigger-annotation` _(build)_ restricts this to observer methods carrying the given annotation. Only observers declared in the application archive with the event as their only parameter and no qualifier are routed: observers of libraries, qualified observers and observers with injected parameters keep their plain CDI delivery. Observers with `notifyObserver = Reception.IF_EXISTS` are not routed either, since their bean may not exist when the dispatcher delivers. A routed observer method must be a non-private instance method, otherwise the build fails and names the method.
+
+=== Clock and serialization
+
+Publication dates come from the application's `java.time.Clock` bean when there is one, else from the UTC system clock.
+
+Events are written as JSON by the `EventSerializer` bean of `quarkus-modulith-events`, which uses the application's Jackson mapper: Jackson 2 on Quarkus 3, Jackson 3 on Quarkus 4. Declare a bean of that type to replace it. Like Spring Modulith, the stored format follows the application mapper's settings (naming strategy, unknown properties, dates), so changing them changes what new rows contain and what old rows must still match. Keep the mapper settings stable, or provide a dedicated `EventSerializer`. A store that keeps text uses `toString()` on the serialized form.
+
+Every listened event type is registered for reflection in native executables with its whole type graph and every known subtype, since the registry stores the concrete class. For a listener of a JDK type, such as `Object` or `Serializable`, only the subtypes in the application are registered, with a build warning; annotate other event types with `@RegisterForReflection`.
+
+== The JPA store
+
+`quarkus-modulith-events-jpa` keeps publications in the `event_publication` table with Spring Modulith's columns and status values, so an application moving from Spring Modulith keeps its table: the shop integration tests let Spring Modulith 2.1.2 write a publication, and Quarkus Modulith read, resubmit and complete it.
+
+[cols="1,3"]
+|===
+|Property |Meaning
+
+|`quarkus.modulith.events.jpa.persistence-unit` _(build)_
+|The persistence unit of the outbox tables, `<default>` by default. With a named unit, map the package `io.quarkiverse.modulith.events.jpa` to it (`quarkus.hibernate-orm."outbox".packages`). The publishing code must use the same datasource for the outbox guarantee to hold.
+|===
+
+[source,sql]
+----
+CREATE TABLE event_publication (
+  id                     UUID NOT NULL PRIMARY KEY,
+  listener_id            VARCHAR(512) NOT NULL,
+  event_type             VARCHAR(512) NOT NULL,
+  serialized_event       TEXT NOT NULL,
+  publication_date       TIMESTAMP WITH TIME ZONE NOT NULL,
+  completion_date        TIMESTAMP WITH TIME ZONE,
+  status                 VARCHAR(32),
+  completion_attempts    INT,
+  last_resubmission_date TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX event_publication_by_completion_date_idx ON event_publication (completion_date);
+CREATE INDEX event_publication_by_listener_idx
+  ON event_publication (completion_date, listener_id, publication_date, id);
+----
+
+The first index is Spring Modulith's. The second, which a schema generated by Hibernate gets as well, serves the queries every resubmission page and outbox run makes: the incomplete publications of one listener in publication order. Add it to a table that Spring Modulith or a migration tool created.
+
+Every query is portable HQL. A publication date bound at or after 9999-12-30 is no bound, so "every publication" never meets the timestamp range of the database. An event published inside a read-only listener transaction, whose session does not flush by itself, is flushed right away, so its deliveries find it after the commit. The repository and the read-only transactions are default beans (`@DefaultBean` on Quarkus 3, `@Reserve` on Quarkus 4): an application's own `EventPublicationRepository` or `ReadOnlyTransactions` bean replaces them. Looking up the incomplete publication of an equal event compares the stored text in Java, page by page over the listener's publications, so it also works where long text cannot be compared in SQL (Oracle `CLOB`). The tests run on H2, PostgreSQL and MySQL; the repository contract also runs on PostgreSQL 18 from Dev Services.
+
+`event_publication_archive` has the same columns. Rows without status, written by older Spring Modulith versions, read as `COMPLETED` when they have a completion date and as `FAILED` otherwise, so the failed-publication resubmission picks them up, as in Spring Modulith 2.1.2 and the other stores.
+
+== Delivery guarantees
+
+Delivery is at least once. A listener can see an event twice after a crash between its side effects outside the database and the completion, after a staleness check marked a slow delivery failed and it was resubmitted, or when a delivery runs longer than the takeover age (`staleness.processing`, or else `republish-older-than`) and a resubmission takes it over. Make listeners idempotent.
+
+Claims are single conditional updates. When the database reports a concurrent claim as a serialization failure (SQLState `40001`, PostgreSQL at REPEATABLE READ or SERIALIZABLE, MySQL deadlocks), the claim counts as lost to the other instance, not as a failure. The two-instance tests run on PostgreSQL 17 and MySQL 8.4.
+
+== Configuration reference
+
+include::./includes/quarkus-modulith-events.adoc[leveloffset=+1, opts=optional]
+
+include::./includes/quarkus-modulith-events-jpa.adoc[leveloffset=+1, opts=optional]

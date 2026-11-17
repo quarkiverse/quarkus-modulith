@@ -1,0 +1,18 @@
+@startuml
+
+set separator none
+top to bottom direction
+hide stereotype
+
+skinparam {
+  componentStyle uml1
+}
+
+<style>
+  root {
+    BackgroundColor: #ffffff;
+    FontColor: #444444;
+  }
+</style>
+
+@enduml

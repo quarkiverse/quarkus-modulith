@@ -1,0 +1,1 @@
+org.springframework.modulith.core.ApplicationModuleSourceFactory=io.quarkiverse.modulith.core.par.SpringContributingFactory

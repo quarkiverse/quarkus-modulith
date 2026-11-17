@@ -1,0 +1,95 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-use-legacy-structure]] [.property-path]##link:#quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-use-legacy-structure[`+++quarkus.modulith.events.jdbc.use-legacy-structure+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.jdbc.use-legacy-structure+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether the tables have Spring Modulith's legacy structure (version 1: no `STATUS`, `COMPLETION_ATTEMPTS` and `LAST_RESUBMISSION_DATE` columns). Publications in a legacy table cannot be marked processing or failed. Takes effect at build time, because it selects the repository bean.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_JDBC_USE_LEGACY_STRUCTURE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_JDBC_USE_LEGACY_STRUCTURE+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-datasource]] [.property-path]##link:#quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-datasource[`+++quarkus.modulith.events.jdbc.datasource+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.jdbc.datasource+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The name of the datasource that holds the event publication tables. The default datasource when not set. Takes effect at build time.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_JDBC_DATASOURCE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_JDBC_DATASOURCE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-schema]] [.property-path]##link:#quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-schema[`+++quarkus.modulith.events.jdbc.schema+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.jdbc.schema+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The schema of the event publication tables. The connection's default schema when not set. Only H2, HSQLDB and PostgreSQL support it.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_JDBC_SCHEMA+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_JDBC_SCHEMA+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-schema-initialization-enabled]] [.property-path]##link:#quarkus-modulith-events-jdbc_quarkus-modulith-events-jdbc-schema-initialization-enabled[`+++quarkus.modulith.events.jdbc.schema-initialization.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.jdbc.schema-initialization.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to create the event publication table (and the archive table in `archive` completion mode) at startup when it does not exist. An existing table is left as it is. Turn it off when Flyway or Liquibase manage the tables.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_JDBC_SCHEMA_INITIALIZATION_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_JDBC_SCHEMA_INITIALIZATION_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+|===
+

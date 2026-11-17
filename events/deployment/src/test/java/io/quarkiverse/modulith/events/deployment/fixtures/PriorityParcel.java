@@ -1,0 +1,4 @@
+package io.quarkiverse.modulith.events.deployment.fixtures;
+
+public class PriorityParcel extends ExpressParcel {
+}

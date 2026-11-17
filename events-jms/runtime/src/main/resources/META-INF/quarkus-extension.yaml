@@ -1,0 +1,13 @@
+name: Modulith JMS
+description: "Externalizes module events through a Jakarta Messaging JMSContext"
+metadata:
+  keywords:
+    - modulith
+    - jms
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  unlisted: true
+  config:
+    - "quarkus.modulith.events.jms."

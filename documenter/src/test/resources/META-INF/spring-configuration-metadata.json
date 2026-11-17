@@ -1,0 +1,16 @@
+{
+  "properties": [
+    {
+      "name": "shop.order.limit",
+      "type": "java.lang.Integer",
+      "sourceType": "io.quarkiverse.modulith.docs.fixtures.shop.order.OrderProperties",
+      "description": "The maximum number of open orders, see {@link io.quarkiverse.modulith.docs.fixtures.shop.order.Order}.",
+      "defaultValue": 5
+    },
+    {
+      "name": "shop.order.region",
+      "type": "java.lang.String",
+      "sourceType": "io.quarkiverse.modulith.docs.fixtures.shop.order.OrderProperties"
+    }
+  ]
+}

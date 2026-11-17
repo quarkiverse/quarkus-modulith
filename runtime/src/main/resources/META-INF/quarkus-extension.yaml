@@ -1,0 +1,16 @@
+name: Modulith
+description: Build-time verified application modules, module events with a transactional outbox, and module documentation
+metadata:
+  keywords:
+    - modulith
+    - modular-monolith
+    - modules
+    - architecture
+    - ddd
+    - events
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  config:
+    - "quarkus.modulith."

@@ -1,0 +1,114 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-channels]] [.property-path]##link:#quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-channels[`+++quarkus.modulith.events.messaging.channels+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.messaging.channels+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Additional routing targets that get a channel of their own, for targets a custom `EventExternalizationConfiguration` routes to. A channel is named like its target.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_MESSAGING_CHANNELS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_MESSAGING_CHANNELS+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-default-channel]] [.property-path]##link:#quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-default-channel[`+++quarkus.modulith.events.messaging.default-channel+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.messaging.default-channel+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The channel of events whose target has no channel of their own, such as targets computed by expressions. The connector then addresses the target per message: the Kafka topic, the AMQP 1.0 address and, on Quarkus 4, the RabbitMQ exchange. Without a default channel such events fail to externalize and their publications stay incomplete.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_MESSAGING_DEFAULT_CHANNEL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_MESSAGING_DEFAULT_CHANNEL+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-enable-json]] [.property-path]##link:#quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-enable-json[`+++quarkus.modulith.events.messaging.enable-json+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.messaging.enable-json+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether events are sent as JSON written by the `EventSerializer`, with the content type `application/json` for RabbitMQ and AMQP 1.0, and Kafka's `StringSerializer` as the default value serializer of the generated channels. Otherwise events are sent as they are and the connector's serializer writes them. Like Spring Modulith's `spring.modulith.events.kafka.enable-json` and `spring.modulith.events.rabbitmq.enable-json`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_MESSAGING_ENABLE_JSON+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_MESSAGING_ENABLE_JSON+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a| [[quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-ack-timeout]] [.property-path]##link:#quarkus-modulith-events-messaging_quarkus-modulith-events-messaging-ack-timeout[`+++quarkus.modulith.events.messaging.ack-timeout+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.messaging.ack-timeout+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How long to wait for the connector to acknowledge a message, that is, for the broker to confirm it, before the externalization counts as failed and the event publication stays incomplete. A late acknowledgement is ignored, so a resubmission may send the event twice. Takes effect at startup.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_MESSAGING_ACK_TIMEOUT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_MESSAGING_ACK_TIMEOUT+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events-messaging_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++30S+++`
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-modulith-events-messaging_quarkus-modulith]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

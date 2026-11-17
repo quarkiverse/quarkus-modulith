@@ -1,0 +1,22 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`io.quarkiverse.modulith.deployment.docs.fixtures.app.inventory`
+|Components
+|_Event listeners_
+
+* `i.q.m.d.d.f.a.i.InventoryListener`
+
+_Others_
+
+* `i.q.m.d.d.f.a.i.InventoryGateway`
+* `i.q.m.d.d.f.a.i.Stock`
+|Bean references
+|* `i.q.m.d.d.f.a.c.Catalog` (in Catalog)
+* `i.q.m.d.d.f.a.o.OrderService` (in Orders)
+|Events listened to
+|* `i.q.m.d.d.f.a.o.OrderCompleted` 
+* `i.q.m.d.d.f.a.o.OrderCancelled` (async) 
+* `i.q.m.d.d.f.a.o.OrderCompleted` (async) -- Reserves stock.
+* `i.q.m.d.d.f.a.o.OrderCancelled` 
+|===

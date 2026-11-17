@@ -1,0 +1,14 @@
+name: Modulith Observability
+description: "OpenTelemetry spans and Micrometer metrics for module invocations and module events"
+metadata:
+  keywords:
+    - modulith
+    - opentelemetry
+    - micrometer
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  unlisted: true
+  config:
+    - "quarkus.modulith.observability."

@@ -1,0 +1,274 @@
+= Modules and verification
+
+include::./includes/attributes.adoc[]
+
+Quarkus Modulith analyses the class files of the application, finds its application modules and checks the rules
+between them. The same analysis runs in two places:
+
+* during the Quarkus build, which fails on violations by default, and records the model as the `ApplicationModules`
+  bean,
+* in a plain JUnit test through `ApplicationModules.of(Application.class)`, exactly like Spring Modulith, without
+  starting Quarkus.
+
+Both build the same model from the same class files, with the same rules and messages as Spring Modulith 2.1.2.
+
+== How modules are found
+
+The base package is taken from, in this order:
+
+. the `quarkus.modulith.base-package` property,
+. the package of the type annotated with `@Modulith` or `@Modulithic`,
+. the longest package prefix shared by all classes of the application.
+
+Only one type of the application may carry `@Modulith` or `@Modulithic`. Like Spring Modulith, the build looks for it in the production classes only, so the fixture applications of the test sources that `TestApplicationModules.of` analyzes (see xref:testing.adoc[]) may be annotated too.
+
+`@Modulith(additionalPackages = ...)` (or `quarkus.modulith.additional-packages`) adds further root packages.
+
+`quarkus.modulith.detection-strategy` decides which packages of a root package are modules:
+
+[cols="1,3"]
+|===
+|Value |Modules
+
+|`direct-sub-packages` (default)
+|every direct sub-package of the root package
+
+|`explicitly-annotated`
+|only packages annotated with `@ApplicationModule` or jMolecules' `@Module`, at any depth
+
+|the name of a class
+|what an `io.quarkiverse.modulith.core.ApplicationModuleDetectionStrategy` with a public no-argument constructor
+returns. Its `detectNamedInterfaces` method may also define named interfaces in code, for example with
+`NamedInterfaces.builder(basePackage).matching("api", "spi").build()`
+|===
+
+A strategy registered in `META-INF/services/io.quarkiverse.modulith.core.ApplicationModuleDetectionStrategy` is used
+when the property is not set, with a deprecation warning, as Spring Modulith does for `spring.factories`.
+
+A library can contribute root packages and modules with an `ApplicationModuleSourceFactory` registered in
+`META-INF/services/io.quarkiverse.modulith.core.ApplicationModuleSourceFactory`.
+
+A sub-package of a module annotated with `@ApplicationModule` (or jMolecules' `@Module`) is a nested module. Its
+identifier defaults to its name relative to the root package, for example `catalog.pricing`. With
+`useFullyQualifiedModuleNames` (or `quarkus.modulith.use-fully-qualified-module-names`) identifiers default to the
+full package name.
+
+The display name is `@ApplicationModule(displayName)`, jMolecules' `@Module(name)` or `@Module(value)`, or else the
+capitalized last segment of the base package.
+
+Types of a root package itself belong to no module and are not checked. `quarkus.modulith.ignored-packages` leaves
+packages out entirely, in ArchUnit's notation (`com.acme.legacy`, `com.acme.legacy..`, `..generated..`).
+
+Test classes are left out by default, so a test placed in a module package may use the internals of other modules.
+Set `quarkus.modulith.verification.include-test-classes=true` to check them too.
+
+=== Annotations on types instead of `package-info.java`
+
+`@ApplicationModule` and `@NamedInterface` may be placed on a type annotated with `@PackageInfo`. The annotations
+then apply to the type's package, which helps in languages without package annotations.
+
+=== Spring Modulith's annotations
+
+With `quarkus.modulith.spring-annotations.enabled` (on by default) the annotations of `org.springframework.modulith`
+count like Quarkus Modulith's own: `@ApplicationModule`, `@NamedInterface`, `@Modulith`, `@Modulithic`, `@PackageInfo`
+and `@ApplicationModuleListener`. They are read from the class files, Spring is not needed at runtime, so a code base
+can keep them while it migrates. jMolecules' `@Module` is read the same way.
+
+== What a module exposes
+
+A closed module (the default) exposes:
+
+* the public types of its base package,
+* the public types of packages annotated with `@NamedInterface`, without their sub-packages,
+* the types annotated with `@NamedInterface`.
+
+[source,java]
+----
+@NamedInterface("events")
+package com.acme.shop.order.events;
+----
+
+`@NamedInterface` takes one or more names in `value` or `name`. Without a name, a package interface is named after the
+package's last segment, and a type interface after the last segment of the type's package; the latter is not allowed
+in the module's base package. When `propagate` is `true` (the default), the public types that appear in the public
+constructors and methods of an annotated type join its interface, transitively.
+
+Everything else is internal. An open module, declared with `@ApplicationModule(type = OPEN)`, exposes all its types
+and is left out of cycle detection.
+
+== Allowed dependencies
+
+`@ApplicationModule(allowedDependencies = ...)` restricts what the module may use:
+
+[cols="1,3"]
+|===
+|Entry |Grants
+
+|`order`
+|the base package of the `order` module
+
+|`order::events`
+|the named interface `events` of the `order` module
+
+|`order::*`
+|all named interfaces of the `order` module, without its base package
+
+|`order::**`
+|everything the `order` module exposes (a Quarkus Modulith addition)
+|===
+
+Leaving the attribute out does not restrict dependencies. An explicit empty array allows none. Modules listed in
+`@Modulith(sharedModules = ...)` or `quarkus.modulith.shared-modules` are allowed for every module but themselves.
+
+== How dependencies are detected
+
+The analysis reads every class file with ASM, without building a tree, and records the references ArchUnit reports
+for Spring Modulith: supertypes and their type arguments, fields, method and constructor signatures with their type
+arguments, thrown types, type parameter bounds, annotations and their members, and in method bodies field accesses,
+method and constructor calls, method references, `instanceof` checks and class literals. References in lambdas count
+for the method declaring the lambda.
+
+Each reference to a type of another module gets a kind:
+
+[cols="1,3"]
+|===
+|Kind |When
+
+|`USES_COMPONENT`
+|a bean injects the type: an `@Inject`, `@Autowired` or `@Resource` member, or the only constructor
+
+|`EVENT_LISTENER`
+|a listener method receives the type: `@ApplicationModuleListener`, a CDI observer, Spring's `@EventListener` or
+jMolecules' `@DomainEventHandler`
+
+|`ENTITY`
+|the type is a JPA entity
+
+|`DEFAULT`
+|any other reference
+|===
+
+Beans are classes with a CDI scope or stereotype, Jakarta REST resources, Spring components, repository interfaces
+(Spring Data, Jakarta Data), Panache repositories, configuration mappings, validators and the types produced by
+`@Produces` or `@Bean` methods.
+
+== The rules
+
+The verification checks, for every module:
+
+. Every entry of `allowedDependencies` and `sharedModules` names an existing module and named interface, and no
+  identifier contains `::`.
+. Closed modules do not form a dependency cycle. Each cycle is reported once, with one reference per step.
+. A module with `allowedDependencies` only depends on what it lists.
+. A module only refers to exposed types of other modules.
+. A nested module is only used by its parent and the parent's other nested modules. Nested modules may use the
+  internals of their parents.
+. With `quarkus.modulith.verification.allow-field-injection=false`, beans of other modules are not injected into
+  fields. Spring Modulith always applies this rule. Quarkus recommends package-private field injection, so the rule is
+  off by default.
+
+The messages are the ones Spring Modulith 2.1.2 uses for the same breach, for example `Module 'order' depends on
+non-exposed type com.acme.inventory.internal.Stock within module 'inventory'!`, followed by the place of the
+reference.
+
+=== Additional rules
+
+`quarkus.modulith.verification.additional-rules` lists `io.quarkiverse.modulith.core.ModulithRule` implementations,
+which receive the model and return violations, at build time and in `verify()`.
+
+Rules, a detection strategy named in `quarkus.modulith.detection-strategy` and strategies or source factories
+registered with `ServiceLoader` run inside the build, as in Spring Modulith. They are instantiated through their
+public no-argument constructor in the build class loader, so they must not rely on runtime configuration, CDI or
+static state that should survive a dev mode reload.
+
+`quarkus.modulith.verification.jmolecules-rules=true` runs the jMolecules DDD, hexagonal, layered and onion rules at
+build time. It needs `org.jmolecules.integrations:jmolecules-archunit` on the build class path. In plain tests these
+rules run by default when the library is present, as in Spring Modulith, and `VerificationOptions` adds ArchUnit rules:
+
+[source,java]
+----
+ApplicationModules.of(Application.class)
+        .verify(VerificationOptions.defaults().andAdditionalVerifications(myArchRule));
+----
+
+== What happens on a violation
+
+`quarkus.modulith.verification.mode` decides what the build does:
+
+[cols="1,3"]
+|===
+|Value |Effect
+
+|`fail` (default)
+|The build fails and lists the violations. In dev mode the error page shows them, and the application comes back once
+the code is fixed.
+
+|`warn`
+|The build logs the violations and goes on. `ApplicationModules.detectViolations()` returns them at runtime.
+
+|`disabled`
+|No verification at build time. `detectViolations()` verifies the recorded model when it is called.
+|===
+
+== The model in a plain test
+
+[source,java]
+----
+class ModularityTests {
+
+    static final ApplicationModules MODULES = ApplicationModules.of(Application.class);
+
+    @Test
+    void verifiesTheModularStructure() {
+        MODULES.verify();
+    }
+}
+----
+
+`ApplicationModules.of` reads the classes of the root packages from the class path, leaves test output directories
+out, and honors the `quarkus.modulith.*` properties of `application.properties` and system properties. It reads the
+class files with ASM, an optional dependency of `quarkus-modulith-core`, so add `org.ow2.asm:asm` in test scope (and
+`org.jmolecules.integrations:jmolecules-archunit` for the jMolecules rules). Without ASM the call fails with a message
+saying so.
+`ApplicationModules.of(type, ClassLocations.TESTS)` builds the model of test fixtures, `ClassLocations.ALL` reads both.
+With ArchUnit on the test class path, `of(type, DescribedPredicate)` leaves classes out (see `Filters.withoutModule`)
+and `of(type, ImportOption)` selects class files. Models are cached per type and settings.
+
+== The model at runtime
+
+`ApplicationModules` is a CDI bean holding the model computed at build time, with the same API:
+
+[source,java]
+----
+@Inject
+ApplicationModules modules;
+
+@Test
+void verifiesTheModularStructure() {
+    modules.verify();
+}
+----
+
+The build writes the model to the resource `META-INF/quarkus-modulith/model.bin` (compressed, each name stored
+once), and the bean reads it the first time it is used. The startup code therefore stays the same size whatever the
+size of the application: an application of 2,000 classes in 20 modules ships an 80 KB resource instead of 2 MB of
+recorded bytecode.
+
+`verify()` on the bean fails again on every call while the rules are broken, because all tests of an application
+share the bean. Spring Modulith verifies once per instance.
+
+`ApplicationModulesRuntime` and `ApplicationRuntime` beans add the application name, the `@Modulith` type and the user
+class of a bean. With `quarkus.modulith.export.enabled=true` the build also writes the model in Spring Modulith's JSON
+format to `META-INF/quarkus-modulith/application-modules.json`, for tools that read Spring Modulith's file.
+`ApplicationModulesExporter` writes the same JSON from a test.
+
+In a native executable `JavaType.reflect()` loads only classes that are registered for reflection (or otherwise
+reachable by name), such as the `@Modulith` type, which the extension registers. The rest of the model works without
+reflection.
+
+== Module initializers
+
+Beans implementing `ApplicationModuleInitializer` run at startup, in the dependency order of their modules: an
+initializer runs after those of the modules its module depends on. The order is computed at build time. Within a
+module, `@Priority` (lower first) and then the class name decide. Each run is logged at `DEBUG` by
+`io.quarkiverse.modulith.runtime.initializer`.

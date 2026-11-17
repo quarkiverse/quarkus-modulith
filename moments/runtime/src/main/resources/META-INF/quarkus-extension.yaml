@@ -1,0 +1,14 @@
+name: Modulith Moments
+description: "Passage of time events (second, minute, hour, day, week, month, quarter, year) and a time machine for tests"
+metadata:
+  keywords:
+    - modulith
+    - time
+    - scheduler
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  unlisted: true
+  config:
+    - "quarkus.modulith.moments."

@@ -1,0 +1,29 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`io.quarkiverse.modulith.docs.fixtures.shop.order`
+|Components
+|_REST resources_
+
+* `i.q.m.d.f.s.o.OrderController`
+
+_Services_
+
+* `i.q.m.d.f.s.o.OrderManagement`
+
+_Configuration mappings_
+
+* `i.q.m.d.f.s.o.OrderProperties`
+|Bean references
+|* `i.q.m.d.f.s.c.Catalog` (in Product Catalog)
+|Aggregate roots
+|* `i.q.m.d.f.s.o.Order`
+|Value types
+|* `i.q.m.d.f.s.o.LineItem`
+|Published events
+|* `i.q.m.d.f.s.o.OrderCancelled` created by:
+** `i.q.m.d.f.s.o.OrderManagement.cancel()`
+* `i.q.m.d.f.s.o.OrderCompleted` created by:
+** `i.q.m.d.f.s.o.OrderManagement.complete(…)`
+
+|===

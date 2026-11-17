@@ -1,0 +1,72 @@
+= Module-aware Flyway
+
+include::./includes/attributes.adoc[]
+
+Each module keeps its migrations in its own folder and history table, and the migrations run in module dependency order, the way Spring Modulith's `spring.modulith.runtime.flyway-enabled` works. Module tests only migrate the modules they start.
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-flyway</artifactId>
+</dependency>
+----
+
+[source,properties]
+----
+quarkus.modulith.flyway.enabled=true
+quarkus.flyway.migrate-at-start=true
+----
+
+== Layout
+
+With the default location `db/migration`:
+
+----
+src/main/resources/db/migration/
+├── __root/                    migrations that belong to no module
+│   └── V1__base.sql
+├── catalog/
+│   └── V1__products.sql
+└── billing/                   billing depends on catalog
+    └── V1__invoice_lines.sql
+----
+
+When the Flyway instance of the default datasource migrates (`quarkus.flyway.migrate-at-start`, or a call to `Flyway#migrate()`):
+
+. The migrations in `db/migration/__root` run with the configured history table (`flyway_schema_history` by default).
+. Then, for each module, after the modules it depends on, the migrations in `db/migration/<module>` run with the history table `flyway_schema_history_<module>`. Modules in a dependency cycle (possible with verification in `warn` mode) keep the order of the model.
+
+Every instance starts from the Flyway configuration of the default datasource, with a baseline at version 0, so each module's `V1` runs on a schema that already holds other modules' tables.
+
+IMPORTANT: Turning the feature on sets `baseline-on-migrate` to `true` and `baseline-version` to `0` for the root migration as well, overriding `quarkus.flyway.baseline-on-migrate` and `quarkus.flyway.baseline-version`, as Spring Modulith does; the startup logs a warning when either is set to something else. A non-empty schema without a history table is therefore baselined instead of being rejected, and a database adopted with `baseline-version=5` runs `V1` to `V5` of the root folder again. Keep that in mind when the feature is turned on for an existing database. Wildcard locations (`*`, `?`) fail the startup, since the root migration would see the migrations of every module. Modules without migration files are skipped and get no history table. SQL and Java migrations both work; a Java migration of a module lives in the package of its folder, for example `db.migration.billing.V2__Backfill`.
+
+The module migrations run inside quarkus-flyway's own migration, so they finish before Hibernate ORM validates the schema, work in dev mode and in native executables (Quarkus collects the migration files at build time), and `quarkus.flyway.clean-at-start` cleans the module tables as well. Validation and repair (`quarkus.flyway.validate-at-start`, `quarkus.flyway.repair-at-start`, `Flyway#validate()`, `Flyway#repair()`, `Flyway#info()`) cover the root history table only: a changed module migration shows on the next migration. Only the default datasource is migrated per module, and only from class path locations.
+
+Module identifiers become history table suffixes, so with the feature on the identifier of a module with migration files must start with a letter and have at most 40 letters, digits or underscores. The build fails and names the module otherwise; change the identifier with `@ApplicationModule(id = ...)`. Modules without migration files are not checked, so a nested module keeps its default identifier, such as `shipping.tracking`, until it gets migrations. With a custom `quarkus.flyway.table`, the startup fails when a module history table name would exceed 63 characters, the PostgreSQL limit.
+
+== Module tests
+
+A module test (see xref:testing.adoc[]) migrates the root folder and the modules it starts. A test of `billing` with `BootstrapMode.DIRECT_DEPENDENCIES` migrates `catalog` and `billing`, and leaves `shipping` out. Since Dev Services may reuse the database between test profiles, set `quarkus.flyway.clean-at-start=true` and `quarkus.flyway.clean-disabled=false` in tests.
+
+== Skipping modules
+
+A CDI bean implementing `io.quarkiverse.modulith.flyway.MigrationFilter` decides per module. A module is migrated only when every filter agrees.
+
+[source,java]
+----
+@Singleton
+public class SkipReporting implements MigrationFilter {
+
+    @Override
+    public boolean shouldMigrate(ApplicationModuleIdentifier module, Flyway flyway) {
+        return !module.value().equals("reporting");
+    }
+}
+----
+
+The `Flyway` argument is the instance configured for the module, with its locations and history table.
+
+== Configuration
+
+include::includes/quarkus-modulith-flyway.adoc[leveloffset=+1, opts=optional]

@@ -1,0 +1,10 @@
+flowchart LR
+    catalog["Catalog"]
+    inventory["Inventory"]
+    order["Orders"]
+    shared["Shared"]
+    inventory -- "uses" --> catalog
+    inventory -- "uses" --> order
+    order -- "uses" --> catalog
+    classDef open stroke-dasharray: 5 5
+    class shared open

@@ -1,0 +1,77 @@
+= Public API and SPI
+
+include::./includes/attributes.adoc[]
+
+This page lists the types applications and Quarkus Modulith extensions may rely on. Their signatures are frozen: they only change in a compatible way. A method whose behavior is not implemented yet throws `UnsupportedOperationException`, and an annotation attribute that is not evaluated yet says so in its Javadoc. Listener attributes the dispatcher cannot honor yet fail the build rather than being ignored.
+
+Everything in a `runtime` or `deployment` package is internal and may change in any release.
+
+== Annotations and application API
+
+Artifact `quarkus-modulith-api`, a plain jar without Quarkus dependency.
+
+[cols="1,2"]
+|===
+|Package |Types
+
+|`io.quarkiverse.modulith`
+|`@ApplicationModule`, `@NamedInterface`, `@Modulith`, `@Modulithic`, `@PackageInfo`, `@ApplicationModuleListener`, `ApplicationModuleInitializer`
+
+|`io.quarkiverse.modulith.events`
+|`EventPublication`, `CompletedEventPublications`, `IncompleteEventPublications`, `FailedEventPublications`, `ResubmissionOptions`, `@Externalized`, `RoutingTarget`, `EventExternalized`, `ExternalizationMode`, `EventExternalizationConfiguration`
+|===
+
+== Module model
+
+Artifact `quarkus-modulith-core`, a plain jar. Package `io.quarkiverse.modulith.core`:
+
+* `ApplicationModules`: the model, injectable as a bean in a Quarkus application. `of(Class)` and `of(String)` will build it in a plain test.
+* `ApplicationModule`, `ApplicationModuleIdentifier`
+* `ApplicationModuleDependencies`, `ApplicationModuleDependency`, `DependencyType`, `DependencyDepth`
+* `Violations`, `Violation`
+* `ModelData`: the recorded form of the model. Public because the runtime builds `ApplicationModules` from it, not meant for applications.
+* The model is complete: `ApplicationModules.of(Class)` and `of(String)` build it in a plain test (with `ClassLocations`, ArchUnit `DescribedPredicate` and `ImportOption` overloads), and the package also holds `ApplicationModuleIdentifiers`, `JavaType`, `JavaPackage`, `JavaPackages`, `PackageName`, `NamedInterface`, `NamedInterfaces`, `NamedInterfacesBuilder`, `AllowedDependency`, `AllowedDependencies`, `ModuleBean`, `ArchitecturallyEvidentType`, `ReferenceMethod`, `EventType`, `Source`, `EntryPoint`, `EntryPointKind`, `FormattableType`, `NonModuleTypeAbbreviation`, `ModulithMetadata`, `ApplicationModuleInformation`, `ApplicationModuleDetectionStrategy`, `ApplicationModuleSource`, `ApplicationModuleSourceFactory`, `ApplicationModulesFactory`, `VerificationOptions`, `ModulithRule`, `Filters`, `ClassLocations`, `ApplicationRuntime` and `ApplicationModulesRuntime`; `io.quarkiverse.modulith.core.util.ApplicationModulesExporter` writes the JSON export. `io.quarkiverse.modulith.core.data` holds the records `ModelData` is made of, and `io.quarkiverse.modulith.core.impl` the analysis, both internal.
+* `quarkus-modulith-flyway`, package `io.quarkiverse.modulith.flyway`: `MigrationFilter`, CDI beans that decide whether a module's Flyway migrations run (see xref:flyway.adoc[]).
+
+== Service provider interfaces
+
+For Quarkus Modulith extensions, not for applications.
+
+[cols="1,1,2"]
+|===
+|Artifact |Package |Types
+
+|`quarkus-modulith`
+|`io.quarkiverse.modulith.events.spi`
+|`EventPublicationRegistry` (stores publications for the dispatcher), `EventRedelivery` (submits a stored publication again), `PublishedEventsCapture` (receives published events in tests)
+
+|`quarkus-modulith-events`
+|`io.quarkiverse.modulith.events.core`
+|`EventPublicationRepository` with `FailedCriteria`, `TargetEventPublication`, `PublicationTargetIdentifier`, `EventSerializer`
+
+|`quarkus-modulith-events`
+|`io.quarkiverse.modulith.events.config`
+|`EventsConfig`, the registry settings under `quarkus.modulith.events` that every store reads
+
+|`quarkus-modulith-events`
+|`io.quarkiverse.modulith.events.externalization`
+|`EventExternalizationTransport`
+|===
+
+* Event externalization: `io.quarkiverse.modulith.events` adds `ParsedRoutingTarget` and implements `EventExternalizationConfiguration` with Spring Modulith's selector and router. `quarkus-modulith-events` exposes, in `io.quarkiverse.modulith.events.externalization`, `EventExternalizationTransport`, `EventExternalizer` (externalizes one event, used by outbox extensions) and `ExternalizationStrategy` (SPI for extensions that bring their own outbox), and its deployment module the build items `ExternalizationBuildItem`, `ExternalizationTransportBuildItem`, `ExternalizationStrategyBuildItem` and `ExternalizedTypeBuildItem` for transport extensions. Types in `.externalization.impl` are public only for generated code. `quarkus-modulith-events-jobrunr` adds `io.quarkiverse.modulith.events.jobrunr.JobRunrExternalizationTransport`.
+
+== Testing
+
+* `quarkus-modulith-junit`, package `io.quarkiverse.modulith.test`: `ApplicationModuleTest`, `ApplicationModuleTestProfile`, `BootstrapMode`, `ModuleTestExecution`, `Scenario`, `When`, `EventResult`, `StateChangeResult`, `ScenarioCustomizer`, `TransactionOperations`, `EnableScenarios`, `PublishedEvents`, `TypedPublishedEvents`, `AssertablePublishedEvents`, `PublishedEventsAssert`, `PublishedEventAssert`, `PublishedEventsExtension`, `AggregateTestUtils`, `ApplicationModuleComponents`, `TestApplicationModules`.
+* `quarkus-modulith`, package `io.quarkiverse.modulith.testing`: `ModuleTestRuntimeConfig`, the runtime settings `quarkus-modulith-junit` reads. An SPI for that module, not for applications.
+* `quarkus-modulith-junit-changes`, package `io.quarkiverse.modulith.junit`: `ModulithExecutionCondition`, `Changes`, `Change`; package `io.quarkiverse.modulith.junit.diff`: `FileModificationDetector`, `ModifiedFile`.
+* `quarkus-modulith-documenter`, package `io.quarkiverse.modulith.docs`: `Documenter`, `DocumenterOptions`, `DiagramOptions`, `DiagramStyle`, `ElementsWithoutRelationships`, `DiagramComponent`, `CanvasOptions`, `Grouping`, `JMoleculesGroupings`, `SpringGroupings`, `QuarkusGroupings`, `DocumentationOutput`, `DocumentationModel`, `CoreModels` with `ModuleDetails`, `ModuleType`, `ModuleBean`, `ModuleDependency`, `PublishedEvent`, `EventSource`, `ListenerMethod`, `ModuleProperty`, `Stereotype`, `ApplicationModulesJson`, `TypeNames`; package `io.quarkiverse.modulith.docs.metadata`: `DocumentationSource`, `TypeMetadata`, `MethodMetadata`. `quarkus-modulith-apt`: `ModulithJavadocProcessor`. `quarkus-modulith-observability`, package `io.quarkiverse.modulith.observability`: `ModulithSpanCustomizer`, `ModuleInvocation`, `ModulithEventMetrics`, `ModulithEventMetricsCustomizer`, `ModulithObservations`, `ModulithMetrics`. `quarkus-modulith`, package `io.quarkiverse.modulith.runtime`: `ModulithCapabilities`, the capability names the extensions share. `quarkus-modulith-core`, package `io.quarkiverse.modulith.core.util`: `MermaidDiagram`.
+* `quarkus-modulith-events-tck`, package `io.quarkiverse.modulith.events.tck`: `EventPublicationRepositoryContract`, the contract tests every repository passes, and `InMemoryEventPublicationRepository`. Add it with `test` scope.
+
+== Configuration roots
+
+Each artifact owns its own prefix. `quarkus.modulith` (base package, verification) belongs to `quarkus-modulith`, `quarkus.modulith.docs` and `quarkus.modulith.test` to its deployment module, `quarkus.modulith.events` to `quarkus-modulith-events`, and each store or transport adds its own segment, for example `quarkus.modulith.events.jdbc`. See xref:config-reference.adoc[].
+
+* Event publication: `io.quarkiverse.modulith.events` adds `AbandonedEventPublications` and `ConditionalEventListener`. `io.quarkiverse.modulith.events.spi` adds `TransactionRunner` (transactions with and without Narayana) and `ReadOnlyTransactions` (read-only listener transactions of a store). `io.quarkiverse.modulith.events.core` adds `PageCriteria` and `PublicationCursor`, and `EventPublicationRepository` gains paged reads, staleness marking and counted deletes as default methods, so existing stores keep compiling. `io.quarkiverse.modulith.events.config` adds `CompletionMode` (with `ARCHIVE`) and `EventsFixedConfig`, which now holds the completion mode because stores derive their mapping from it. `quarkus-modulith-events-tck` adds `DeleteCompletionModeContract`, `ArchiveCompletionModeContract` and `Publications`. `DefaultEventPublicationRegistry` has a public constructor for registries outside CDI.
+* API freeze amendments (additive): `io.quarkiverse.modulith.events.AbandonedEventPublications`, `io.quarkiverse.modulith.events.ConditionalEventListener`, `io.quarkiverse.modulith.events.spi.TransactionRunner`, `io.quarkiverse.modulith.events.spi.ReadOnlyTransactions` and `io.quarkiverse.modulith.events.spi.SerializationFailures` are new frozen types. `IncompleteEventPublications#resubmitIncompletePublications(ResubmissionOptions)` is implemented by the registry instead of a throwing default, and `@ApplicationModuleListener`'s `condition`, `propagation` and `readOnlyTransaction` are honored. `EventPublicationRegistry` and `EventPublicationRepository` gained `afterCommit` and `deletePublicationsCounting` as default methods.
+* Further amendments: `EventPublicationRepository#claim(UUID, Set<Status>, Instant, Instant)` (compare-and-set claim with stale takeover), `EventPublicationRepository#findIncompletePublications(PublicationTargetIdentifier, Set<Status>, PageCriteria)` (one listener's page, filtered in the database), the constant `EventPublicationRepository.STALEABLE`, and `io.quarkiverse.modulith.events.core.ResubmissionExclusion` (listeners the registry does not resubmit).

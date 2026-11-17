@@ -1,0 +1,34 @@
+@startuml
+title <size:24>Docs</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Component>
+
+System_Boundary("Docs_boundary", "Docs", $tags="") {
+  Container_Boundary("Docs.Docs_boundary", "Docs", $tags="") {
+    Component(Docs.Docs.Catalog, "Catalog", $techn="Module", $descr="", $tags="", $link="")
+    Component(Docs.Docs.Orders, "Orders", $techn="Module", $descr="", $tags="", $link="")
+    Component(Docs.Docs.Inventory, "Inventory", $techn="Module", $descr="", $tags="", $link="")
+  }
+
+}
+
+Rel(Docs.Docs.Inventory, Docs.Docs.Catalog, "uses", $techn="", $tags="", $link="")
+Rel(Docs.Docs.Inventory, Docs.Docs.Orders, "uses", $techn="", $tags="", $link="")
+Rel(Docs.Docs.Orders, Docs.Docs.Catalog, "uses", $techn="", $tags="", $link="")
+Rel(Docs.Docs.Inventory, Docs.Docs.Orders, "listens to", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

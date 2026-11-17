@@ -1,0 +1,24 @@
+package io.quarkiverse.modulith.it.eventsmongodb.repository;
+
+import io.quarkiverse.modulith.events.core.EventSerializer;
+import io.quarkiverse.modulith.events.tck.TckEvent;
+
+/**
+ * Writes the contract's events as JSON without a JSON library, so the tests run the same on both Quarkus lines.
+ */
+public final class TckEventSerializer implements EventSerializer {
+
+    private static final String PREFIX = "{\"id\": \"";
+    private static final String SUFFIX = "\"}";
+
+    @Override
+    public Object serialize(Object event) {
+        return PREFIX + ((TckEvent) event).id() + SUFFIX;
+    }
+
+    @Override
+    public <T> T deserialize(Object serialized, Class<T> type) {
+        String json = serialized.toString();
+        return type.cast(new TckEvent(json.substring(PREFIX.length(), json.length() - SUFFIX.length())));
+    }
+}

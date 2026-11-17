@@ -1,0 +1,158 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-moments_quarkus-modulith-moments-enabled]] [.property-path]##link:#quarkus-modulith-moments_quarkus-modulith-moments-enabled[`+++quarkus.modulith.moments.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.moments.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to register the `Moments` bean and its scheduler jobs. When `false`, no passage of time event is published and neither `Moments`, `TimeMachine` nor `Now` can be injected. Spring Modulith: `spring.modulith.moments.enabled`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_MOMENTS_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_MOMENTS_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-moments_quarkus-modulith-moments-enable-time-machine]] [.property-path]##link:#quarkus-modulith-moments_quarkus-modulith-moments-enable-time-machine[`+++quarkus.modulith.moments.enable-time-machine+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.moments.enable-time-machine+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether the `Moments` bean is a `TimeMachine`, which shifts time and publishes every event on the way. Meant for tests and local development, for example in the `test` profile: `%test.quarkus.modulith.moments.enable-time-machine=true`. Spring Modulith: `spring.modulith.moments.enable-time-machine`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_MOMENTS_ENABLE_TIME_MACHINE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_MOMENTS_ENABLE_TIME_MACHINE+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a| [[quarkus-modulith-moments_quarkus-modulith-moments-granularity]] [.property-path]##link:#quarkus-modulith-moments_quarkus-modulith-moments-granularity[`+++quarkus.modulith.moments.granularity+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.moments.granularity+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The finest events to publish: `seconds`, `minutes`, `hours` or `days`. Every granularity includes the coarser ones, so `hours` publishes hourly and daily events (plus the weekly, monthly, quarterly and yearly ones derived from the days). Decides which scheduler jobs are registered at startup and how `TimeMachine.shiftBy` steps through time. Spring Modulith: `spring.modulith.moments.granularity`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_MOMENTS_GRANULARITY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_MOMENTS_GRANULARITY+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`seconds`, `minutes`, `hours`, `days`
+|`+++hours+++`
+
+a| [[quarkus-modulith-moments_quarkus-modulith-moments-zone-id]] [.property-path]##link:#quarkus-modulith-moments_quarkus-modulith-moments-zone-id[`+++quarkus.modulith.moments.zone-id+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.moments.zone-id+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The zone used to compute the local times and dates attached to the events, and the zone of the scheduler jobs, so the daily job runs at midnight of this zone. Spring Modulith: `spring.modulith.moments.zone-id`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_MOMENTS_ZONE_ID+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_MOMENTS_ZONE_ID+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/ZoneId.html[ZoneId]
+|`+++UTC+++`
+
+a| [[quarkus-modulith-moments_quarkus-modulith-moments-locale]] [.property-path]##link:#quarkus-modulith-moments_quarkus-modulith-moments-locale[`+++quarkus.modulith.moments.locale+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.moments.locale+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The locale that defines the first day of a week and the week numbering, for example `en-US` (weeks from Sunday to Saturday) or `de-DE` (ISO weeks from Monday to Sunday). Defaults to the default locale of the JVM, which a native executable fixes at build time, so set it explicitly. A native executable only has the data of the locales listed in `quarkus.locales` (by default the locale of the build machine): add this locale there, for example `quarkus.locales=en-US,de-DE`. The extension logs a warning at startup when the locale is not available. Spring Modulith: `spring.modulith.moments.locale`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_MOMENTS_LOCALE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_MOMENTS_LOCALE+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Locale.html[Locale]
+|
+
+a| [[quarkus-modulith-moments_quarkus-modulith-moments-quarter-start-month]] [.property-path]##link:#quarkus-modulith-moments_quarkus-modulith-moments-quarter-start-month[`+++quarkus.modulith.moments.quarter-start-month+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.moments.quarter-start-month+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The first month of the fiscal year, so of the first quarter. With `april`, the first quarter runs from April to June and the fourth from January to March. Spring Modulith: `spring.modulith.moments.quarter-start-month`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_MOMENTS_QUARTER_START_MONTH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_MOMENTS_QUARTER_START_MONTH+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`january`, `february`, `march`, `april`, `may`, `june`, `july`, `august`, `september`, `october`, `november`, `december`
+|`+++january+++`
+
+a| [[quarkus-modulith-moments_quarkus-modulith-moments-jobs-enabled]] [.property-path]##link:#quarkus-modulith-moments_quarkus-modulith-moments-jobs-enabled[`+++quarkus.modulith.moments.jobs.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.moments.jobs.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether this instance registers the scheduler jobs that publish the events. Every instance with the jobs publishes every event, so with several instances of the application each event arrives once per instance. Set it to `false` on all instances but one (for example with the environment variable `QUARKUS_MODULITH_MOMENTS_JOBS_ENABLED=false`), or make the listeners idempotent. The time machine works either way. Quarkus extra.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_MOMENTS_JOBS_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_MOMENTS_JOBS_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+|===
+

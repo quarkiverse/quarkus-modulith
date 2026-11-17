@@ -1,0 +1,870 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-enabled]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-enabled[`+++quarkus.modulith.docs.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to write the module documentation (PlantUML and Mermaid diagrams, module canvases, aggregating document and overview) when the application is packaged.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-dev-mode]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-dev-mode[`+++quarkus.modulith.docs.dev-mode+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.dev-mode+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to write the documentation in dev mode too, on every reload. Off by default to keep reloads fast.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_DEV_MODE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_DEV_MODE+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-output-directory]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-output-directory[`+++quarkus.modulith.docs.output-directory+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.output-directory+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The directory the documentation is written to. Relative paths are resolved against the build output directory (`target` with Maven). Defaults to `modulith-docs`. It must name a sub-directory of the build output of its own: an absolute path outside the build output, `.`, a path that leaves the build output with `..` or a path inside a directory of the build such as `classes` or `quarkus-app` fails the build, because the directory is cleaned.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_OUTPUT_DIRECTORY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_OUTPUT_DIRECTORY+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++modulith-docs+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-clean]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-clean[`+++quarkus.modulith.docs.clean+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.clean+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to delete the content of the output directory before writing, so files of renamed or removed modules do not linger. Spring Modulith's `Documenter` cleans by default too.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_CLEAN+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_CLEAN+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-diagram-style]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-diagram-style[`+++quarkus.modulith.docs.diagram.style+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.diagram.style+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The diagram style: `c4` component diagrams or plain `uml` ones.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_DIAGRAM_STYLE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_DIAGRAM_STYLE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`uml`, `c4`
+|`+++c4+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-diagram-dependency-depth]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-diagram-dependency-depth[`+++quarkus.modulith.docs.diagram.dependency-depth+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.diagram.dependency-depth+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How far the diagram of a module follows the modules whose beans it uses.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_DIAGRAM_DEPENDENCY_DEPTH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_DIAGRAM_DEPENDENCY_DEPTH+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`none`, `immediate`, `all`
+|`+++immediate+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-diagram-dependency-types]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-diagram-dependency-types[`+++quarkus.modulith.docs.diagram.dependency-types+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.diagram.dependency-types+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The dependency types drawn. All types when not set.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_DIAGRAM_DEPENDENCY_TYPES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_DIAGRAM_DEPENDENCY_TYPES+++`
+endif::add-copy-button-to-env-var[]
+--
+a|list of `uses-component`, `entity`, `event-listener`, `default`
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-diagram-elements-without-relationships]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-diagram-elements-without-relationships[`+++quarkus.modulith.docs.diagram.elements-without-relationships+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.diagram.elements-without-relationships+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether modules without a relationship to another module of the diagram are shown.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_DIAGRAM_ELEMENTS_WITHOUT_RELATIONSHIPS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_DIAGRAM_ELEMENTS_WITHOUT_RELATIONSHIPS+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`hidden`, `visible`
+|`+++hidden+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-canvas-groupings]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-canvas-groupings[`+++quarkus.modulith.docs.canvas.groupings+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.canvas.groupings+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The groups beans are listed in.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_CANVAS_GROUPINGS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_CANVAS_GROUPINGS+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`quarkus`, `spring`, `none`
+|`+++quarkus+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-canvas-reveal-internals]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-canvas-reveal-internals[`+++quarkus.modulith.docs.canvas.reveal-internals+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.canvas.reveal-internals+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether internal beans and types are listed as well.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_CANVAS_REVEAL_INTERNALS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_CANVAS_REVEAL_INTERNALS+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-canvas-reveal-empty-lines]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-canvas-reveal-empty-lines[`+++quarkus.modulith.docs.canvas.reveal-empty-lines+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.canvas.reveal-empty-lines+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether rows without content are written.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_CANVAS_REVEAL_EMPTY_LINES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_CANVAS_REVEAL_EMPTY_LINES+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-docs-canvas-api-base]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-docs-canvas-api-base[`+++quarkus.modulith.docs.canvas.api-base+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.docs.canvas.api-base+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The base URL of the application's Javadoc. When set, types link to their Javadoc page.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DOCS_CANVAS_API_BASE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DOCS_CANVAS_API_BASE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-endpoint-enabled]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-endpoint-enabled[`+++quarkus.modulith.endpoint.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.endpoint.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to serve the module model as JSON. Needs an HTTP extension such as `quarkus-vertx-http` or `quarkus-rest`. When not set, the endpoint is served in dev and test mode only: the JSON maps the internals of the application, so a packaged application serves it only with `true`, and should then protect the path or move it to the management interface.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_ENDPOINT_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_ENDPOINT_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-endpoint-path]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-endpoint-path[`+++quarkus.modulith.endpoint.path+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.endpoint.path+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The path of the endpoint, relative to the non-application root path (`/q`), or to the management interface root when the management interface is enabled.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_ENDPOINT_PATH+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_ENDPOINT_PATH+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|`+++modulith+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-module]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-module[`+++quarkus.modulith.test.module+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.module+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The module under test, given as a module identifier or as any package inside the module. When set, beans of modules that are not part of the test are excluded from the application.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_MODULE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_MODULE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-bootstrap-mode]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-bootstrap-mode[`+++quarkus.modulith.test.bootstrap-mode+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.bootstrap-mode+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Which other modules are started together with the module under test.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_BOOTSTRAP_MODE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_BOOTSTRAP_MODE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`standalone`, `direct-dependencies`, `all-dependencies`
+|`+++standalone+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-extra-modules]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-extra-modules[`+++quarkus.modulith.test.extra-modules+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.extra-modules+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Additional modules to start, by identifier.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_EXTRA_MODULES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_EXTRA_MODULES+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-verify-automatically]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-verify-automatically[`+++quarkus.modulith.test.verify-automatically+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.verify-automatically+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether a module test build fails on any module rule violation of the application, also when `quarkus.modulith.verification.mode` is `warn`. Only used when `module` is set.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_VERIFY_AUTOMATICALLY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_VERIFY_AUTOMATICALLY+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-skip-optimizations]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-skip-optimizations[`+++quarkus.modulith.test.skip-optimizations+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.skip-optimizations+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Read by `quarkus-modulith-junit-changes`: whether to run all tests, without looking at the changed files.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_SKIP_OPTIMIZATIONS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_SKIP_OPTIMIZATIONS+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-on-no-changes]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-on-no-changes[`+++quarkus.modulith.test.on-no-changes+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.on-no-changes+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Read by `quarkus-modulith-junit-changes`: what to run when no file changed, `execute-all` (the default) or `skip-all` (`execute-none`).
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_ON_NO_CHANGES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_ON_NO_CHANGES+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-file-modification-detector]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-file-modification-detector[`+++quarkus.modulith.test.file-modification-detector+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.file-modification-detector+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Read by `quarkus-modulith-junit-changes`: how changed files are found, `default`, `uncommitted-changes`, `reference-commit` or the name of a `FileModificationDetector` class.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_FILE_MODIFICATION_DETECTOR+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_FILE_MODIFICATION_DETECTOR+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-test-reference-commit]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-reference-commit[`+++quarkus.modulith.test.reference-commit+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.reference-commit+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Read by `quarkus-modulith-junit-changes`: the commit the `reference-commit` detector compares with.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_REFERENCE_COMMIT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_REFERENCE_COMMIT+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-base-package]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-base-package[`+++quarkus.modulith.base-package+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.base-package+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The base package of the application. Every direct sub-package is an application module. When not set, the package of the type annotated with `@Modulith` is used, or else the longest package prefix shared by all application classes.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_BASE_PACKAGE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_BASE_PACKAGE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-detection-strategy]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-detection-strategy[`+++quarkus.modulith.detection-strategy+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.detection-strategy+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How modules are found: `direct-sub-packages` (every direct sub-package of the base package is a module), `explicitly-annotated` (only packages annotated with `@ApplicationModule` or jMolecules' `@Module`), or the fully qualified name of an `ApplicationModuleDetectionStrategy` with a public no-argument constructor. When not set, a strategy registered as service is used, else `direct-sub-packages`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_DETECTION_STRATEGY+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_DETECTION_STRATEGY+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-system-name]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-system-name[`+++quarkus.modulith.system-name+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.system-name+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The name of the system, overriding `@Modulith(systemName)`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_SYSTEM_NAME+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_SYSTEM_NAME+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-shared-modules]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-shared-modules[`+++quarkus.modulith.shared-modules+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.shared-modules+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Identifiers of modules every other module may depend on, in addition to `@Modulith(sharedModules)`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_SHARED_MODULES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_SHARED_MODULES+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-additional-packages]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-additional-packages[`+++quarkus.modulith.additional-packages+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.additional-packages+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Further root packages whose sub-packages are modules, in addition to `@Modulith(additionalPackages)`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_ADDITIONAL_PACKAGES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_ADDITIONAL_PACKAGES+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-use-fully-qualified-module-names]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-use-fully-qualified-module-names[`+++quarkus.modulith.use-fully-qualified-module-names+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.use-fully-qualified-module-names+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether module identifiers default to the full package name, overriding `@Modulith(useFullyQualifiedModuleNames)`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_USE_FULLY_QUALIFIED_MODULE_NAMES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_USE_FULLY_QUALIFIED_MODULE_NAMES+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-ignored-packages]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-ignored-packages[`+++quarkus.modulith.ignored-packages+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.ignored-packages+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Packages left out of the model, in ArchUnit's notation: `com.acme.legacy` for the package itself, `com.acme.legacy..` for it and its sub-packages, `..generated..` for any package with that segment.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_IGNORED_PACKAGES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_IGNORED_PACKAGES+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-spring-annotations-enabled]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-spring-annotations-enabled[`+++quarkus.modulith.spring-annotations.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.spring-annotations.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether `org.springframework.modulith` annotations (`@ApplicationModule`, `@NamedInterface`, `@Modulith`, `@Modulithic`, `@PackageInfo`, `@ApplicationModuleListener`) count like Quarkus Modulith's own, so a code base can keep them while it migrates. The annotations are read from the class files, Spring is not needed.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_SPRING_ANNOTATIONS_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_SPRING_ANNOTATIONS_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-verification-mode]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-verification-mode[`+++quarkus.modulith.verification.mode+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.verification.mode+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+What to do when the module rules are broken: `fail` the build, only log a `warn`ing, or skip the verification (`disabled`).
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_VERIFICATION_MODE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_VERIFICATION_MODE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`fail`, `warn`, `disabled`
+|`+++fail+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-verification-include-test-classes]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-verification-include-test-classes[`+++quarkus.modulith.verification.include-test-classes+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.verification.include-test-classes+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether test classes are part of the module model. Off by default, like in Spring Modulith, so that tests placed in a module package may use the internals of other modules.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_VERIFICATION_INCLUDE_TEST_CLASSES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_VERIFICATION_INCLUDE_TEST_CLASSES+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-verification-allow-field-injection]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-verification-allow-field-injection[`+++quarkus.modulith.verification.allow-field-injection+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.verification.allow-field-injection+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether beans of other modules may be injected into fields. Spring Modulith reports field injection across modules as violation and asks for constructor injection. Quarkus recommends package-private field injection, so it is allowed by default. Set to `false` for Spring Modulith's rule.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_VERIFICATION_ALLOW_FIELD_INJECTION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_VERIFICATION_ALLOW_FIELD_INJECTION+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-verification-additional-rules]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-verification-additional-rules[`+++quarkus.modulith.verification.additional-rules+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.verification.additional-rules+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Fully qualified names of `io.quarkiverse.modulith.core.ModulithRule` implementations with a public no-argument constructor, run with the module rules.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_VERIFICATION_ADDITIONAL_RULES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_VERIFICATION_ADDITIONAL_RULES+++`
+endif::add-copy-button-to-env-var[]
+--
+|list of string
+|
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-verification-jmolecules-rules]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-verification-jmolecules-rules[`+++quarkus.modulith.verification.jmolecules-rules+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.verification.jmolecules-rules+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to run the jMolecules DDD and architecture rules of `jmolecules-archunit` at build time, like Spring Modulith does by default in tests. Needs ArchUnit and `jmolecules-archunit` on the build class path.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_VERIFICATION_JMOLECULES_RULES+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_VERIFICATION_JMOLECULES_RULES+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-export-enabled]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-export-enabled[`+++quarkus.modulith.export.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.export.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether the build writes the model in Spring Modulith's `application-modules.json` format to `META-INF/quarkus-modulith/application-modules.json` in the application. Quarkus Modulith does not read the file itself, so enable it only for tools that expect Spring Modulith's file.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EXPORT_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EXPORT_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith_quarkus-modulith-listeners-executor]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-listeners-executor[`+++quarkus.modulith.listeners.executor+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.listeners.executor+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Where asynchronous listeners run: the Quarkus `worker` pool, or `virtual-threads`, which needs the `quarkus-virtual-threads` extension.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_LISTENERS_EXECUTOR+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_LISTENERS_EXECUTOR+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`worker`, `virtual-threads`
+|`+++worker+++`
+
+a| [[quarkus-modulith_quarkus-modulith-listeners-shutdown-timeout]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-listeners-shutdown-timeout[`+++quarkus.modulith.listeners.shutdown-timeout+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.listeners.shutdown-timeout+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How long the application waits at shutdown for listeners that are still running, like Spring Modulith's `spring.modulith.default-async-termination`. Deliveries that did not finish stay incomplete in the event publication registry and are submitted again later.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_LISTENERS_SHUTDOWN_TIMEOUT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_LISTENERS_SHUTDOWN_TIMEOUT+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++2S+++`
+
+a| [[quarkus-modulith_quarkus-modulith-listeners-completion-timing]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-listeners-completion-timing[`+++quarkus.modulith.listeners.completion-timing+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.listeners.completion-timing+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+When a publication is marked completed: `in-listener`, inside the listener's transaction, or `in-interceptor`, in a separate transaction after the listener's transaction committed.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_LISTENERS_COMPLETION_TIMING+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_LISTENERS_COMPLETION_TIMING+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`in-listener`, `in-interceptor`
+|`+++in-listener+++`
+
+a| [[quarkus-modulith_quarkus-modulith-test-thread-bound-published-events]] [.property-path]##link:#quarkus-modulith_quarkus-modulith-test-thread-bound-published-events[`+++quarkus.modulith.test.thread-bound-published-events+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.test.thread-bound-published-events+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether the `PublishedEvents` of a test only contain the events published by the test's thread and the threads it starts, instead of all events published while the test runs. Turn it on when tests run in parallel.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_TEST_THREAD_BOUND_PUBLISHED_EVENTS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_TEST_THREAD_BOUND_PUBLISHED_EVENTS+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-modulith_quarkus-modulith]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

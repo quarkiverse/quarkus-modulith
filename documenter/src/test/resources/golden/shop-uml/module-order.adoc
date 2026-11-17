@@ -1,0 +1,37 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Description
+|Takes orders. 
++
+Completes them. One
+Two
+|Base package
+|`io.quarkiverse.modulith.docs.fixtures.shop.order`
+|Components
+|_REST resources_
+
+* `i.q.m.d.f.s.o.OrderController`
+
+_Services_
+
+* `i.q.m.d.f.s.o.OrderManagement` -- Manages `i.q.m.d.f.s.o.Order#id`.
+
+_Configuration mappings_
+
+* `i.q.m.d.f.s.o.OrderProperties`
+|Bean references
+|* `i.q.m.d.f.s.c.Catalog` (in Product Catalog) -- The products we sell.
+|Aggregate roots
+|* `i.q.m.d.f.s.o.Order` -- An order.
+|Value types
+|* `i.q.m.d.f.s.o.LineItem`
+|Published events
+|* `i.q.m.d.f.s.o.OrderCancelled` created by:
+** `i.q.m.d.f.s.o.OrderManagement.cancel()`
+* `i.q.m.d.f.s.o.OrderCompleted` -- Published when an `i.q.m.d.f.s.o.Order` completes. Created by:
+** `i.q.m.d.f.s.o.OrderManagement.complete(…)`
+
+|Properties
+|* `shop.order.limit` -- `java.lang.Integer`, default `5`. The maximum number of open orders, see `i.q.m.d.f.s.o.Order`.
+* `shop.order.region` -- `java.lang.String`
+|===

@@ -1,0 +1,8 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`io.quarkiverse.modulith.deployment.docs.fixtures.app.catalog`
+|Components
+|* `i.q.m.d.d.f.a.c.Catalog`
+* `i.q.m.d.d.f.a.c.spi.Pricing` (via `i.q.m.d.d.f.a.c.internal.DefaultPricing`)
+|===

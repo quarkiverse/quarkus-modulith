@@ -1,0 +1,372 @@
+= Testing modules
+
+include::./includes/attributes.adoc[]
+
+`quarkus-modulith-junit` brings Spring Modulith's test support to `@QuarkusTest`: module tests that start one application module, `Scenario` for tests of event-driven interactions, and `PublishedEvents` to check the events a test published. `quarkus-modulith-junit-changes` skips the tests of modules that did not change.
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-junit</artifactId>
+    <version>{project-version}</version>
+    <scope>test</scope>
+</dependency>
+----
+
+AssertJ is needed for `Scenario`, `AssertablePublishedEvents` and `PublishedEventsAssert`. With `quarkus-narayana-jta`, scenario stimuli run in a new transaction.
+
+== Verifying the structure
+
+The build already fails on violations. A test that injects `ApplicationModules` documents the expected structure and covers `warn` mode:
+
+[source,java]
+----
+@QuarkusTest
+class ModularityTest {
+
+    @Inject
+    ApplicationModules modules;
+
+    @Test
+    void verifiesTheModularStructure() {
+        modules.verify();
+    }
+}
+----
+
+[[module-tests]]
+== Integration testing application modules
+
+`@ApplicationModuleTest` is a `@QuarkusTest` that starts the module of the test's package, and optionally other modules, instead of the whole application. Beans of the other modules are left out at build time. Quarkus builds one application per test profile, so the test also names an `ApplicationModuleTestProfile` subclass, which takes its settings from the annotation:
+
+[source,java]
+----
+package com.acme.inventory;
+
+@ApplicationModuleTest
+@TestProfile(InventoryIntegrationTests.Profile.class)
+class InventoryIntegrationTests {
+
+    public static class Profile extends ApplicationModuleTestProfile {
+    }
+
+    // individual test cases
+}
+----
+
+The build logs the setup once:
+
+[source,text]
+----
+INFO  Bootstrapping module test for 'inventory' in mode STANDALONE, starting modules [inventory, shared]
+----
+
+With `DEBUG` enabled for `io.quarkiverse.modulith.deployment.moduletest` the build also logs the module description, its dependencies, the extra and shared modules and the excluded packages.
+
+[[bootstrap-modes]]
+=== Bootstrap modes
+
+[cols="1,3"]
+|===
+|Bootstrap mode |Started modules
+
+|`STANDALONE` (default)
+|the module under test
+
+|`DIRECT_DEPENDENCIES`
+|the module under test and the modules it depends on
+
+|`ALL_DEPENDENCIES`
+|the module under test and all its dependencies, transitively
+|===
+
+Shared modules declared with `@Modulith(sharedModules = ...)` always start. The annotation's attributes match Spring Modulith's:
+
+[source,java]
+----
+@ApplicationModuleTest(mode = BootstrapMode.ALL_DEPENDENCIES, extraIncludes = "audit")
+@TestProfile(ShippingModuleTest.Profile.class)
+class ShippingModuleTest {
+
+    public static class Profile extends ApplicationModuleTestProfile {
+    }
+}
+----
+
+* `value` / `mode`: the bootstrap mode.
+* `extraIncludes`: identifiers of modules to start in addition. Unknown identifiers fail the build.
+* `module`: the module under test, by identifier or package, when the test is not in the module's package.
+* `verifyAutomatically` (default `true`): the module test build fails on any module rule violation, also when `quarkus.modulith.verification.mode` is `warn`.
+
+The profile methods `module()`, `bootstrapMode()`, `extraModules()`, `verifyAutomatically()` and `additionalConfigOverrides()` can be overridden instead, which also works without the annotation (with `@QuarkusTest` and `@EnableScenarios`). Each profile means a separate build and start of the application, so keep their number small.
+
+Like Spring Modulith's `ModuleTestExecution`, a module test builds its model with the `io.quarkiverse.modulith.core.ApplicationModulesFactory` registered in `META-INF/services/io.quarkiverse.modulith.core.ApplicationModulesFactory` (usually in `src/test/resources`), when there is one: the build passes it the `@Modulith` type and uses the modules it returns, for example `TestApplicationModules.of(type)` to slice an application of test fixtures. Without a factory, or without a `@Modulith` type, and in builds that are no module test, the build analyzes the application itself.
+
+A test method can declare a `ModuleTestExecution` parameter to look at the setup: the module under test, the bootstrap mode, the started dependencies, extra and shared modules, their base packages, and `includes(className)`.
+
+[[efferent-dependencies]]
+=== Dealing with efferent dependencies
+
+If the module under test injects a bean of a module that is not started, the build fails with an unsatisfied dependency. Rather than starting more modules, provide a test double: an `@Alternative @Priority(1)` bean in the test sources, or a mock with `@InjectMock` from `quarkus-junit-mockito` when the bean is normal scoped. Many such dependencies usually mean the modules are coupled too tightly and should rather talk through events.
+
+=== Hibernate ORM entities
+
+Quarkus assigns entities to persistence units from the build-time index, and an extension cannot narrow that per test. Entities of modules that are not started therefore stay mapped. To leave them out, set the persistence unit packages for the profile:
+
+[source,java]
+----
+public static class Profile extends ApplicationModuleTestProfile {
+
+    @Override
+    protected Map<String, String> additionalConfigOverrides() {
+        return Map.of("quarkus.hibernate-orm.packages", "com.acme.inventory,com.acme.shared");
+    }
+}
+----
+
+=== Module slices
+
+Spring Boot's slice annotations (`@DataJpaTest` and friends) have no Quarkus counterpart. To test the beans of one module without starting the application, `ApplicationModuleComponents` builds a `QuarkusComponentTest` (add `io.quarkus:quarkus-junit-component`) whose components are the bean classes of one module, and mocks the beans of other modules it injects. The module is the closest package above the test class whose `package-info` declares `@ApplicationModule`, else the sub-package of the `@Modulith` type's package that contains the test, else the test's package; `of(testClass, moduleId)` selects a module by its `@ApplicationModule(id)` or package name. Bean classes follow ArC's rules: classes with a scope or a stereotype, classes declaring producers or observers (as `@Dependent`), and classes declaring `@ApplicationModuleListener` methods (as `@Singleton`, as the extension does). Abstract classes, interfaces, `@Vetoed` classes and packages, and nested modules are left out, and an unknown module identifier fails with the known ones:
+
+[source,java]
+----
+package com.acme.shipping;
+
+class ShippingComponentTest {
+
+    @RegisterExtension
+    static final QuarkusComponentTestExtension extension = ApplicationModuleComponents
+            .of(ShippingComponentTest.class).build();
+
+    @Inject
+    Shipping shipping;
+
+    @InjectMock
+    Inventory inventory;
+
+    @Test
+    void shipsWhenTheStockSuffices() {
+        when(inventory.stockOf("sku-1")).thenReturn(5);
+
+        assertThat(shipping.canShip("sku-1", 3)).isTrue();
+    }
+}
+----
+
+[[scenarios]]
+== Defining integration test scenarios
+
+Integration tests of modules that talk through asynchronous, transactional `@ApplicationModuleListener` methods have to deal with transactions, concurrency and assertions. `Scenario` bundles them. Declare it as a test method parameter of an `@ApplicationModuleTest`, or of a `@QuarkusTest` annotated with `@EnableScenarios`:
+
+[source,java]
+----
+@ApplicationModuleTest
+@TestProfile(SomeApplicationModuleTest.Profile.class)
+class SomeApplicationModuleTest {
+
+    public static class Profile extends ApplicationModuleTestProfile {
+    }
+
+    @Test
+    void someModuleIntegrationTest(Scenario scenario) {
+        // Use the Scenario API to define your integration test
+    }
+}
+----
+
+A test follows this skeleton:
+
+. A stimulus: an event publication or a call of a bean the module exposes.
+. Optional customization of the execution, such as timeouts.
+. The expected outcome: an event of some type matching some criteria, or a state change of the module that a call of an exposed bean shows.
+. Optional verifications of the received event or the changed state.
+
+[source,java]
+----
+// Start with an event publication
+scenario.publish(new MyApplicationEvent(…)).…
+
+// Start with a bean invocation
+scenario.stimulate(() -> someBean.someMethod(…)).…
+----
+
+Both run in a *new* transaction (with `quarkus-narayana-jta`), so the events reach the listeners, which run after the commit. Database changes of the stimulus are never rolled back. Clean them up with `andCleanup(…)`, which runs also when the scenario fails. Stimuli that control transactions themselves take a `TransactionOperations`, and optionally the CDI `Event<Object>` to publish with:
+
+[source,java]
+----
+scenario.stimulate(tx -> tx.execute(() -> orders.place("sku-1", 4)))…
+
+scenario.stimulate((tx, events) -> {
+    tx.executeWithoutResult(() -> events.fire(new OrderCancelled("o-1")));
+})…
+----
+
+`customize(…)` customizes the Awaitility `ConditionFactory` used to wait, and `andWaitAtMost(…)` sets the timeout (Awaitility's default is ten seconds). The expected outcome can be an event, optionally constrained further:
+
+[source,java]
+----
+….andWaitForEventOfType(SomeOtherEvent.class)
+ .matching(event -> …) // Use some predicate here
+ .…
+----
+
+The terminal operations `toArrive…` run the scenario. They give access to the expected event and to the result of the stimulus:
+
+[source,java]
+----
+// Executes the scenario
+….toArrive()
+
+// Execute and define assertions on the event received
+….toArriveAndVerify(event -> …)
+----
+
+A complete scenario:
+
+[source,java]
+----
+scenario.publish(new MyApplicationEvent(…))
+        .andWaitForEventOfType(SomeOtherEvent.class)
+        .matching(event -> …)
+        .toArriveAndVerify(event -> …);
+----
+
+Instead of an event, the scenario can wait for a state change of the module:
+
+[source,java]
+----
+scenario.publish(new MyApplicationEvent(…))
+        .andWaitForStateChange(() -> someBean.someMethod(…))
+        .andVerify(result -> …);
+----
+
+Without a predicate, a value counts as changed when it is not `null`, not `false`, and not an empty collection or optional. `andWaitForStateChange(supplier, predicate)` takes an explicit acceptance criterion.
+
+[source,java]
+----
+scenario.stimulate(() -> orders.place("sku-1", 2))
+        .andWaitAtMost(Duration.ofSeconds(5))
+        .andWaitForStateChange(() -> inventory.stockOf("sku-1"), stock -> stock == 98)
+        .andExpect(OrderPlaced.class)
+        .matchingMappedValue(OrderPlaced::sku, "sku-1")
+        .toArriveAndVerify((event, orderId) -> assertThat(event.orderId()).isEqualTo(orderId));
+----
+
+Further operations:
+
+* `forEventOfType(…)` and `forStateChange(…)` are aliases of the `andWaitFor…` methods.
+* `matchingMapped(extractor, predicate)` and `matchingMappedValue(extractor, value)` constrain the expected event by one of its values.
+* `toArriveAndAssert(…)` runs AssertJ assertions (`PublishedEventAssert`) on the matching events.
+* `andVerifyEvents(…)` verifies all events published during the test after a state change.
+* `andExpect(type)` after a state change expects an event that was published already, without waiting again.
+
+`toArrive()` returns the first matching event, which Spring Modulith's version does not.
+
+[[customizing-scenarios]]
+=== Customizing scenario execution
+
+To change the defaults of every scenario of a test class, for example the timeout, implement `ScenarioCustomizer` and register it with `@ExtendWith`:
+
+[source,java]
+----
+@ApplicationModuleTest
+@TestProfile(MyTests.Profile.class)
+@ExtendWith(MyCustomizer.class)
+class MyTests {
+
+    public static class Profile extends ApplicationModuleTestProfile {
+    }
+
+    @Test
+    void myTestCase(Scenario scenario) {
+        // scenario will be pre-customized with logic defined in MyCustomizer
+    }
+
+    static class MyCustomizer implements ScenarioCustomizer {
+
+        @Override
+        public Function<ConditionFactory, ConditionFactory> getDefaultCustomizer(Method method, ArcContainer container) {
+            return conditionFactory -> conditionFactory.atMost(Duration.ofMinutes(2));
+        }
+    }
+}
+----
+
+Without a customizer, scenarios poll on the application's `ExecutorService` bean, as `ScenarioCustomizer.forwardExecutorService(container)` describes.
+
+`@QuarkusTest` invokes test methods itself and skips later invocation interceptors, so customizers are applied when the `Scenario` parameter is resolved. That has consequences:
+
+* Customizers are found only through `@ExtendWith` on the test class, its superclasses, the classes that enclose a `@Nested` test class, the test method, and their meta-annotations. A customizer registered with `@RegisterExtension` is ignored.
+* They are instantiated again for every scenario, separately from the instance JUnit registers. They need a no-argument constructor and must not keep instance state.
+* When several are registered, the last one wins. Customizers are not combined.
+
+[[published-events]]
+== Testing published events
+
+A test method of an `@ApplicationModuleTest` can declare a `PublishedEvents` parameter to check the events published while the test runs. In other `@QuarkusTest` classes, register `PublishedEventsExtension` with `@ExtendWith`.
+
+[source,java]
+----
+@ApplicationModuleTest
+@TestProfile(OrderIntegrationTests.Profile.class)
+class OrderIntegrationTests {
+
+    public static class Profile extends ApplicationModuleTestProfile {
+    }
+
+    @Test
+    void someTestMethod(PublishedEvents events) {
+        // …
+        var matchingMapped = events.ofType(OrderCompleted.class)
+                .matchingValue(OrderCompleted::orderId, reference.id());
+
+        assertThat(matchingMapped).hasSize(1);
+    }
+}
+----
+
+With AssertJ, declare `AssertablePublishedEvents` instead and use its fluent assertions:
+
+[source,java]
+----
+@Test
+void someTestMethod(AssertablePublishedEvents events) {
+    // …
+    assertThat(events)
+            .contains(OrderCompleted.class)
+            .matchingValue(OrderCompleted::orderId, reference.id());
+}
+----
+
+The events of a test are those fired through CDI (`Event#fire` and `Event#fireAsync`) whose type is in the application's base package. A test-only bean registered in test mode records them, so the production event path is unchanged. `PublishedEvents.current()` returns everything recorded since the start (bounded to 10,000 events) and `PublishedEvents.clearCurrent()` forgets it.
+
+By default a test sees every event published while it runs, also by other threads. When tests run in parallel, set `quarkus.modulith.test.thread-bound-published-events=true` (a runtime property, for example in a test profile): a test then only sees the events published by its own thread and the threads that thread starts.
+
+`TestApplicationModules.of(type)` builds the module model of the test classes only, without starting Quarkus, for test fixtures that form an application of their own.
+
+`PublishedEvents.of(…)` builds published events from given objects, and `AggregateTestUtils.eventsOf(aggregate)` reads the events an aggregate collected through a method annotated with an annotation named `DomainEvents`, such as Spring Data's.
+
+[[change-aware-test-execution]]
+== Change-aware test execution
+
+Add `io.quarkiverse.modulith:quarkus-modulith-junit-changes` in `test` scope. Its JUnit extension `io.quarkiverse.modulith.junit.ModulithExecutionCondition` skips test classes whose application module neither changed nor depends, directly or transitively, on a changed module. Tests in the root module, outside of any module, and tests whose own source changed always run. The extension is registered through `META-INF/services`. Activate it by enabling JUnit's extension auto detection in the project's `src/test/resources/junit-platform.properties` (`junit.jupiter.extensions.autodetection.enabled=true`), or register it with `@ExtendWith(ModulithExecutionCondition.class)`. Unlike Spring Modulith's artifact, this one does not ship a `junit-platform.properties`, so it never changes the test runs of a project that only has it on the class path. It works without starting Quarkus. The base package comes from `quarkus.modulith.base-package` or from the closest package with one `@Modulith` type.
+
+The optimization backs off and runs everything when the tests are started from IntelliJ IDEA or Eclipse, when a class path resource (`src/main/resources`, `src/test/resources`) changed, when a build file at the module root changed (`pom.xml`, `gradle.properties`, `*.gradle`, `*.gradle.kts`, `gradle/libs.versions.toml`, `gradle/wrapper/gradle-wrapper.properties`), when nothing changed, or outside of a Git repository. Decisions are per test class, never per method.
+
+[cols="1,3"]
+|===
+|Property |Meaning
+
+|`quarkus.modulith.test.file-modification-detector`
+|`default` (uncommitted plus unpushed changes, or `reference-commit` if one is set), `uncommitted-changes`, `reference-commit`, or the fully qualified name of a `FileModificationDetector`.
+
+|`quarkus.modulith.test.reference-commit`
+|Revision to compare `HEAD` with, typically the last successful CI build (`QUARKUS_MODULITH_TEST_REFERENCE_COMMIT`). Check out enough history.
+
+|`quarkus.modulith.test.on-no-changes`
+|`execute-all` (default) or `skip-all` when only files other than classes, resources and build files changed.
+
+|`quarkus.modulith.test.skip-optimizations`
+|`true` runs all tests.
+|===

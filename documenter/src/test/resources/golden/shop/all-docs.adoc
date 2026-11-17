@@ -1,0 +1,23 @@
+== Shop
+plantuml::components.puml[,,format=svg]
+
+== Product Catalog
+plantuml::module-catalog.puml[,,format=svg]
+include::module-catalog.adoc[]
+
+== Shared
+plantuml::module-shared.puml[,,format=svg]
+include::module-shared.adoc[]
+
+== Orders
+plantuml::module-order.puml[,,format=svg]
+include::module-order.adoc[]
+
+== Inventory
+plantuml::module-inventory.puml[,,format=svg]
+include::module-inventory.adoc[]
+
+== Shipping
+plantuml::module-shipping.puml[,,format=svg]
+include::module-shipping.adoc[]
+

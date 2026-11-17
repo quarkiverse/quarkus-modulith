@@ -1,0 +1,113 @@
+= Coming from Spring Modulith
+
+include::./includes/attributes.adoc[]
+
+Most declarations move over by changing imports. Spring Modulith's own annotations keep working too: with
+`quarkus.modulith.spring-annotations.enabled` (the default) the build reads `org.springframework.modulith` annotations
+from the class files, so a code base can migrate step by step without Spring at runtime.
+
+[cols="1,1"]
+|===
+|Spring Modulith |Quarkus Modulith
+
+|`@Modulith`, `@Modulithic`
+|`io.quarkiverse.modulith.Modulith`, `Modulithic`, same attributes (`systemName`, `sharedModules`,
+`useFullyQualifiedModuleNames`, `additionalPackages`)
+
+|`@ApplicationModule(id, displayName, allowedDependencies, type)`
+|`io.quarkiverse.modulith.ApplicationModule`, same attributes and semantics
+
+|`@NamedInterface(value, name, propagate)`, `@PackageInfo`
+|`io.quarkiverse.modulith.NamedInterface`, `PackageInfo`
+
+|jMolecules `@Module`, `@AggregateRoot`, `@DomainEvent`, `DomainEvent`
+|read the same way
+
+|`ApplicationModules.of(App.class).verify()`
+|`io.quarkiverse.modulith.core.ApplicationModules.of(App.class).verify()` in a plain test, same rules and messages.
+Needs `org.ow2.asm:asm` in test scope.
+The build verifies too, and the model is the injectable `ApplicationModules` bean
+
+|`ApplicationModules.Filters.withoutModule("x")`
+|`io.quarkiverse.modulith.core.Filters.withoutModule("x")`
+
+|`ApplicationModuleDetectionStrategy`, `ApplicationModuleSourceFactory`, `ApplicationModulesFactory`
+|same names in `io.quarkiverse.modulith.core`, registered in `META-INF/services` instead of `spring.factories`; a registered `ApplicationModulesFactory` builds the model of module tests, as with Spring Modulith
+
+|`spring.modulith.detection-strategy`
+|`quarkus.modulith.detection-strategy`
+
+|`VerificationOptions`
+|`io.quarkiverse.modulith.core.VerificationOptions`, plus `ModulithRule` for rules over the model
+
+|`ApplicationModuleInitializer`
+|`io.quarkiverse.modulith.ApplicationModuleInitializer`, run in module order at startup
+
+|`ApplicationModulesRuntime`, `ApplicationRuntime`
+|same names in `io.quarkiverse.modulith.core`, provided as beans
+
+|`ApplicationModulesExporter`, `META-INF/spring-modulith/application-modules.json`
+|`io.quarkiverse.modulith.core.util.ApplicationModulesExporter`, `META-INF/quarkus-modulith/application-modules.json`
+with `quarkus.modulith.export.enabled=true`
+
+|`new Documenter(modules).writeDocumentation()`
+|done by the build, see xref:documentation.adoc[]
+
+|`ApplicationEventPublisher.publishEvent(event)`
+|`Event<T>.fire(event)` from CDI
+
+|`@ApplicationModuleListener`
+|`io.quarkiverse.modulith.ApplicationModuleListener`
+
+|`@TransactionalEventListener(AFTER_COMMIT)` with `@Async`
+|`@ApplicationModuleListener`, or CDI `@Observes(during = TransactionPhase.AFTER_SUCCESS)` for a synchronous observer
+
+|`spring-modulith-starter-jpa` and the `event_publication` table
+|`quarkus-modulith-events-jpa`, same table layout
+
+|`IncompleteEventPublications`, `CompletedEventPublications`
+|same names in `io.quarkiverse.modulith.events`
+
+|`spring.modulith.events.republish-outstanding-events-on-restart`
+|`quarkus.modulith.events.republish-outstanding-events-on-restart`
+
+|`spring.modulith.events.completion-mode`
+|`quarkus.modulith.events.completion-mode`
+
+|`@ApplicationModuleTest(mode = DIRECT_DEPENDENCIES)`
+|`@ApplicationModuleTest(mode = DIRECT_DEPENDENCIES)` plus `@TestProfile` with a subclass of `ApplicationModuleTestProfile`
+
+|`Scenario`, `PublishedEvents`
+|`io.quarkiverse.modulith.test.Scenario`, `PublishedEvents`
+|===
+
+== Differences
+
+* Verification runs during the build and fails it by default. Spring Modulith verifies in a test, which also works
+  here with `ApplicationModules.of`.
+* Test classes are left out of the model, like Spring Modulith's default.
+* The model API returns `JavaType` and `JavaPackage` where Spring Modulith returns ArchUnit types, so the runtime does
+  not need ArchUnit. A few methods kept their earlier Quarkus Modulith return types and offer Spring's under another
+  name: `ApplicationModule.getJavaPackage()` (Spring's `getBasePackage()`), `getNamedInterfaceDetails()`
+  (`getNamedInterfaces()`), `getPublishedEventTypes()` (`getPublishedEvents()`), `getBeans()` (`getSpringBeans()`,
+  still available) and `ApplicationModules.getObjectComparator()` (`getComparator()`).
+* Field injection of beans of other modules is allowed by default, because it is the common style in Quarkus. Set
+  `quarkus.modulith.verification.allow-field-injection=false` for Spring Modulith's rule.
+* Dependency descriptions follow ArchUnit's format. Cycles are reported once per cycle, with one reference per step.
+* `ApplicationModules.verify()` passes once and then returns right away, but a failed verification fails again on
+  every call. Spring Modulith verifies once per instance, and in Quarkus the instance is a bean all tests share.
+* `ApplicationModules.of` needs `org.ow2.asm:asm` in test scope, because the core reads class files with ASM and keeps
+  it optional. Spring Modulith brings ArchUnit instead.
+* The JSON export is written only with `quarkus.modulith.export.enabled=true`, because nothing in Quarkus Modulith
+  reads it.
+* Listener conditions (`@ApplicationModuleListener(condition = ...)`) and `@Externalized` routing expressions are not
+  evaluated as SpEL. The forms Spring users write are compiled to bytecode at build time, and anything else fails the
+  build. See xref:events.adoc[] and xref:externalization.adoc[].
+* Completion attempts count every delivery (`markProcessing`), not every resubmission, and a resubmission claims only
+  `PUBLISHED` or `FAILED` publications (with takeover of stale ones). See xref:events.adoc[].
+* The registry stores events as JSON with the application's Jackson mapper. There is no JSON-B fallback.
+* Namastack Outbox is a Spring Boot library and is not supported. The registry's own outbox mode replaces it. Pulsar is
+  not a tested transport yet. Spring Modulith 2.1.2 has no Pulsar externalization either.
+* Module tests exclude beans at build time, so each bootstrap configuration triggers a new build. Spring Modulith builds
+  a smaller application context per test. Hibernate ORM entities of excluded modules stay mapped, see
+  xref:testing.adoc[].

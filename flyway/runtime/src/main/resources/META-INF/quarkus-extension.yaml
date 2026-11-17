@@ -1,0 +1,14 @@
+name: Modulith Flyway
+description: "Module-aware Flyway migrations: one migration folder and history table per module, run in dependency order"
+metadata:
+  keywords:
+    - modulith
+    - flyway
+    - migrations
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  unlisted: true
+  config:
+    - "quarkus.modulith.flyway."

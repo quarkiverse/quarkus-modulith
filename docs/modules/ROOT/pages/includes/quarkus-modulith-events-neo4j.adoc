@@ -1,0 +1,53 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a| [[quarkus-modulith-events-neo4j_quarkus-modulith-events-neo4j-database]] [.property-path]##link:#quarkus-modulith-events-neo4j_quarkus-modulith-events-neo4j-database[`+++quarkus.modulith.events.neo4j.database+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.neo4j.database+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+The Neo4j database of the publication nodes. The default database of the server when not set.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_NEO4J_DATABASE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_NEO4J_DATABASE+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-modulith-events-neo4j_quarkus-modulith-events-neo4j-event-index-enabled]] [.property-path]##link:#quarkus-modulith-events-neo4j_quarkus-modulith-events-neo4j-event-index-enabled[`+++quarkus.modulith.events.neo4j.event-index.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.neo4j.event-index.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to create, at startup and unless they exist, the `eventHashIndex` index on the `eventHash` property of `Neo4jEventPublication` nodes and the unique constraints `eventPublicationIdentifier` and `eventPublicationArchiveIdentifier` on the `identifier` property of `Neo4jEventPublication` and `Neo4jEventPublicationArchive` nodes, which every lifecycle update looks publications up by.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_NEO4J_EVENT_INDEX_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_NEO4J_EVENT_INDEX_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+|===
+

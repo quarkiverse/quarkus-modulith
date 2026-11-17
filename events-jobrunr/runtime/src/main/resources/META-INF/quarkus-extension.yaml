@@ -1,0 +1,14 @@
+name: Modulith JobRunr
+description: "Externalizes module events through JobRunr jobs enqueued in the business transaction"
+metadata:
+  keywords:
+    - modulith
+    - jobrunr
+    - outbox
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  unlisted: true
+  config:
+    - "quarkus.modulith.events.jobrunr."

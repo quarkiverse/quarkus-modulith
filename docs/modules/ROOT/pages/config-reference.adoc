@@ -1,0 +1,11 @@
+= Configuration reference
+
+include::./includes/attributes.adoc[]
+
+== Quarkus Modulith
+
+include::includes/quarkus-modulith.adoc[leveloffset=+1, opts=optional]
+
+== Event publication registry
+
+include::includes/quarkus-modulith-events.adoc[leveloffset=+1, opts=optional]

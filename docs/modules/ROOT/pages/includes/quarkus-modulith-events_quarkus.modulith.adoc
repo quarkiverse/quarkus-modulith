@@ -1,0 +1,471 @@
+[.configuration-legend]
+icon:lock[title=Fixed at build time] Configuration property fixed at build time - All other configuration properties are overridable at runtime
+[.configuration-reference.searchable, cols="80,.^10,.^10"]
+|===
+
+h|[.header-title]##Configuration property##
+h|Type
+h|Default
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events_quarkus-modulith-events-externalization-enabled]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-enabled[`+++quarkus.modulith.events.externalization.enabled+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.enabled+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether events are externalized when a transport is present, for example `quarkus-modulith-events-messaging` or an `EventExternalizationTransport` bean of the application. Like Spring Modulith's `spring.modulith.events.externalization.enabled`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_ENABLED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_ENABLED+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++true+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events_quarkus-modulith-events-externalization-mode]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-mode[`+++quarkus.modulith.events.externalization.mode+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.mode+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How events reach the broker: `module-listener` sends them after the publishing transaction commits, `outbox` records them in the publishing transaction and sends them from a job, through the event publication registry or through JobRunr when `quarkus-modulith-events-jobrunr` is present. Like Spring Modulith's `spring.modulith.events.externalization.mode`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_MODE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_MODE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`module-listener`, `outbox`
+|`+++module-listener+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events_quarkus-modulith-events-completion-mode]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-completion-mode[`+++quarkus.modulith.events.completion-mode+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.completion-mode+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+What happens to a publication once its listener succeeded: `update` sets the completion date and keeps the row, `delete` removes it, `archive` moves it to the archive.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_COMPLETION_MODE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_COMPLETION_MODE+++`
+endif::add-copy-button-to-env-var[]
+--
+a|`update`, `delete`, `archive`
+|`+++update+++`
+
+a|icon:lock[title=Fixed at build time] [[quarkus-modulith-events_quarkus-modulith-events-registry-trigger-annotation]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-registry-trigger-annotation[`+++quarkus.modulith.events.registry-trigger-annotation+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.registry-trigger-annotation+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+When set, only CDI observers notified `AFTER_SUCCESS` whose method carries this annotation get event publications, like Spring Modulith's `spring.modulith.events.registry-trigger-annotation`. By default every such observer does, as every `@TransactionalEventListener` does in Spring Modulith. `@ApplicationModuleListener` methods always get publications.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_REGISTRY_TRIGGER_ANNOTATION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_REGISTRY_TRIGGER_ANNOTATION+++`
+endif::add-copy-button-to-env-var[]
+--
+|string
+|
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-republish-outstanding-events-on-restart]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-republish-outstanding-events-on-restart[`+++quarkus.modulith.events.republish-outstanding-events-on-restart+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.republish-outstanding-events-on-restart+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether to submit all incomplete publications again when the application starts. The resubmission runs in the background after startup, in batches. With several instances of the application, prefer `republish-interval` with `republish-older-than`, since every instance would resubmit the same publications at its start.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_REPUBLISH_OUTSTANDING_EVENTS_ON_RESTART+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_REPUBLISH_OUTSTANDING_EVENTS_ON_RESTART+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-republish-interval]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-republish-interval[`+++quarkus.modulith.events.republish-interval+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.republish-interval+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How often to submit incomplete publications again. Disabled when not set. Needs `quarkus-scheduler`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_REPUBLISH_INTERVAL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_REPUBLISH_INTERVAL+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-republish-older-than]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-republish-older-than[`+++quarkus.modulith.events.republish-older-than+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.republish-older-than+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Only publications older than this are submitted again by the periodic job, so that deliveries still in flight are left alone. Without `staleness.processing` and `staleness.resubmitted`, it is also the age after which a resubmission takes over a claimed or processing publication, whose instance probably died.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_REPUBLISH_OLDER_THAN+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_REPUBLISH_OLDER_THAN+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++5M+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-republish-batch-size]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-republish-batch-size[`+++quarkus.modulith.events.republish-batch-size+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.republish-batch-size+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How many publications a resubmission reads from the store at once. Must be positive.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_REPUBLISH_BATCH_SIZE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_REPUBLISH_BATCH_SIZE+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|`+++100+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-delete-completed-interval]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-delete-completed-interval[`+++quarkus.modulith.events.delete-completed-interval+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.delete-completed-interval+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How often to delete completed publications. Disabled when not set. Needs `quarkus-scheduler`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_DELETE_COMPLETED_INTERVAL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_DELETE_COMPLETED_INTERVAL+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-delete-completed-older-than]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-delete-completed-older-than[`+++quarkus.modulith.events.delete-completed-older-than+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.delete-completed-older-than+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Completed publications whose completion is older than this are deleted by the periodic job.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_DELETE_COMPLETED_OLDER_THAN+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_DELETE_COMPLETED_OLDER_THAN+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++7D+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-staleness-published]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-staleness-published[`+++quarkus.modulith.events.staleness.published+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.staleness.published+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+After how long a `PUBLISHED` publication is stale. Must be positive.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_STALENESS_PUBLISHED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_STALENESS_PUBLISHED+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-staleness-processing]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-staleness-processing[`+++quarkus.modulith.events.staleness.processing+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.staleness.processing+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+After how long a `PROCESSING` publication is stale. Must be positive. A resubmission takes over a claimed or processing publication older than this. The monitor also marks the outbox publications of event externalization failed, so keep it longer than `externalization.outbox.send-timeout` plus `stale-after`, or another instance may send a publication that is still being sent.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_STALENESS_PROCESSING+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_STALENESS_PROCESSING+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-staleness-resubmitted]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-staleness-resubmitted[`+++quarkus.modulith.events.staleness.resubmitted+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.staleness.resubmitted+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+After how long a `RESUBMITTED` publication is stale. Must be positive.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_STALENESS_RESUBMITTED+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_STALENESS_RESUBMITTED+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-staleness-check-interval]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-staleness-check-interval[`+++quarkus.modulith.events.staleness.check-interval+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.staleness.check-interval+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How often to look for stale publications. Must be positive. Needs `quarkus-scheduler`.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_STALENESS_CHECK_INTERVAL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_STALENESS_CHECK_INTERVAL+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++1M+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-resubmission-abandon-after-attempts]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-resubmission-abandon-after-attempts[`+++quarkus.modulith.events.resubmission.abandon-after-attempts+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.resubmission.abandon-after-attempts+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Publications with at least this many completion attempts are abandoned: they are no longer resubmitted and are listed by `AbandonedEventPublications`. Never when not set.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_RESUBMISSION_ABANDON_AFTER_ATTEMPTS+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_RESUBMISSION_ABANDON_AFTER_ATTEMPTS+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-externalization-serialize-externalization]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-serialize-externalization[`+++quarkus.modulith.events.externalization.serialize-externalization+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.serialize-externalization+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+Whether the default externalization configuration sends events one at a time, so that the broker sees them in the order they were published. Like Spring Modulith's `spring.modulith.events.externalization.serialize-externalization`. An application that declares its own `EventExternalizationConfiguration` decides this itself.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_SERIALIZE_EXTERNALIZATION+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_SERIALIZE_EXTERNALIZATION+++`
+endif::add-copy-button-to-env-var[]
+--
+|boolean
+|`+++false+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-externalization-serialized-send-timeout]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-serialized-send-timeout[`+++quarkus.modulith.events.externalization.serialized-send-timeout+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.serialized-send-timeout+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+When externalization is serialized, how long one send may wait for the broker's acknowledgement. A send that takes longer fails, and the next event is sent, so that a broker that never answers cannot stop externalization.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_SERIALIZED_SEND_TIMEOUT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_SERIALIZED_SEND_TIMEOUT+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++30S+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-interval]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-interval[`+++quarkus.modulith.events.externalization.outbox.interval+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.outbox.interval+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How often the job looks for publications to send, in addition to running after every transaction that recorded events. Publications that failed are sent again on the next run.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_INTERVAL+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_INTERVAL+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++5S+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-send-timeout]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-send-timeout[`+++quarkus.modulith.events.externalization.outbox.send-timeout+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.outbox.send-timeout+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How long to wait for the broker to acknowledge a message before the publication counts as failed and the run stops, so that later events do not overtake it.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_SEND_TIMEOUT+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_SEND_TIMEOUT+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++30S+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-stale-after]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-stale-after[`+++quarkus.modulith.events.externalization.outbox.stale-after+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.outbox.stale-after+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How long, on top of `send-timeout`, a publication may stay claimed or processing before another instance takes it over, because the instance that claimed it stopped.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_STALE_AFTER+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_STALE_AFTER+++`
+endif::add-copy-button-to-env-var[]
+--
+|link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html[Duration] link:#duration-note-anchor-quarkus-modulith-events_quarkus-modulith[icon:question-circle[title=More information about the Duration format]]
+|`+++1M+++`
+
+a| [[quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-batch-size]] [.property-path]##link:#quarkus-modulith-events_quarkus-modulith-events-externalization-outbox-batch-size[`+++quarkus.modulith.events.externalization.outbox.batch-size+++`]##
+ifdef::add-copy-button-to-config-props[]
+config_property_copy_button:+++quarkus.modulith.events.externalization.outbox.batch-size+++[]
+endif::add-copy-button-to-config-props[]
+
+
+[.description]
+--
+How many publications a run reads at once. Must be at least 1.
+
+
+ifdef::add-copy-button-to-env-var[]
+Environment variable: env_var_with_copy_button:+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_BATCH_SIZE+++[]
+endif::add-copy-button-to-env-var[]
+ifndef::add-copy-button-to-env-var[]
+Environment variable: `+++QUARKUS_MODULITH_EVENTS_EXTERNALIZATION_OUTBOX_BATCH_SIZE+++`
+endif::add-copy-button-to-env-var[]
+--
+|int
+|`+++100+++`
+
+|===
+
+ifndef::no-duration-note[]
+[NOTE]
+[id=duration-note-anchor-quarkus-modulith-events_quarkus-modulith]
+.About the Duration format
+====
+To write duration values, use the standard `java.time.Duration` format.
+See the link:https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html#parse(java.lang.CharSequence)[Duration#parse() Java API documentation] for more information.
+
+You can also use a simplified format, starting with a number:
+
+* If the value is only a number, it represents time in seconds.
+* If the value is a number followed by `ms`, it represents time in milliseconds.
+
+In other cases, the simplified format is translated to the `java.time.Duration` format for parsing:
+
+* If the value is a number followed by `h`, `m`, or `s`, it is prefixed with `PT`.
+* If the value is a number followed by `d`, it is prefixed with `P`.
+====
+endif::no-duration-note[]

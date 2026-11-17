@@ -1,0 +1,16 @@
+name: Modulith Messaging
+description: "Externalizes module events through Quarkus Messaging (Kafka, RabbitMQ, AMQP 1.0)"
+metadata:
+  keywords:
+    - modulith
+    - messaging
+    - kafka
+    - rabbitmq
+    - amqp
+  guide: https://docs.quarkiverse.io/quarkus-modulith/dev/
+  categories:
+    - "miscellaneous"
+  status: "experimental"
+  unlisted: true
+  config:
+    - "quarkus.modulith.events.messaging."

@@ -1,0 +1,127 @@
+= Quarkus Modulith
+:extension-status: experimental
+
+include::./includes/attributes.adoc[]
+
+Quarkus Modulith helps you build a modular monolith on Quarkus. It brings the ideas of https://spring.io/projects/spring-modulith[Spring Modulith] to Quarkus and does the work at build time:
+
+. Each direct sub-package of your application's base package is an application module.
+. The build fails when a module uses the internals of another module, when closed modules form a cycle, or when a module depends on something its `allowedDependencies` do not list.
+. Modules talk through CDI events. Methods annotated with `@ApplicationModuleListener` run after the publishing transaction commits, on a worker thread and in a transaction of their own.
+. With `quarkus-modulith-events-jpa` every delivery is stored in an outbox table first, so failed deliveries can be submitted again.
+. The build writes Mermaid and C4 PlantUML diagrams and a canvas per module. The Dev UI shows the modules, their graph, the violations and the listeners.
+. `quarkus-modulith-junit` starts a single module, with or without its dependencies, in a `@QuarkusTest`.
+
+The module model is computed from the Jandex index and the class files during the build. Nothing is scanned at runtime, so native executables work the same way.
+
+== Installation
+
+Add the extension to your build:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+For the event publication registry (transactional outbox), add:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-events-jpa</artifactId>
+    <version>{project-version}</version>
+</dependency>
+----
+
+For module tests, add with `test` scope:
+
+[source,xml,subs=attributes+]
+----
+<dependency>
+    <groupId>io.quarkiverse.modulith</groupId>
+    <artifactId>quarkus-modulith-junit</artifactId>
+    <version>{project-version}</version>
+    <scope>test</scope>
+</dependency>
+----
+
+== A first modular application
+
+Mark the base package. The annotation is optional, but it makes the base package explicit:
+
+[source,java]
+----
+package com.acme.shop;
+
+@Modulith(systemName = "Shop", sharedModules = "common")
+public class ShopApplication {
+}
+----
+
+Every direct sub-package is a module: `com.acme.shop.order`, `com.acme.shop.inventory`, and so on. Types in a module's base package are its API. Sub-packages such as `com.acme.shop.order.internal` are internal and other modules may not use them.
+
+Declare what a module may depend on in its `package-info.java`:
+
+[source,java]
+----
+@ApplicationModule(allowedDependencies = { "order::events", "common" })
+package com.acme.shop.inventory;
+
+import io.quarkiverse.modulith.ApplicationModule;
+----
+
+Publish an event from the order module with a plain CDI `Event`:
+
+[source,java]
+----
+@ApplicationScoped
+public class OrderManagement {
+
+    @Inject
+    Event<OrderPlaced> events;
+
+    @Transactional
+    public void place(Order order) {
+        // ... persist the order
+        events.fire(new OrderPlaced(order.id(), order.sku(), order.quantity()));
+    }
+}
+----
+
+React to it in the inventory module:
+
+[source,java]
+----
+public class InventoryListener {
+
+    @ApplicationModuleListener
+    void on(OrderPlaced event) {
+        // runs after the order transaction commits, in a new transaction
+    }
+}
+----
+
+Build the application. If the inventory module used a type from `com.acme.shop.order.internal`, for example with `new PurchaseOrder(event.orderId())` in an `InventoryListener` of `com.acme.shop.inventory.internal`, `./mvnw package` would stop with:
+
+[source]
+----
+[ERROR] Failed to execute goal io.quarkus:quarkus-maven-plugin:3.40.1.2:build (default) on project shop: Failed to build quarkus application: io.quarkus.builder.BuildException: Build failure: Build failed due to errors
+[ERROR] 	[error]: Build step io.quarkiverse.modulith.deployment.ModelProcessor#moduleModel threw an exception: io.quarkiverse.modulith.core.Violations: - Module 'inventory' depends on non-exposed type com.acme.shop.order.internal.PurchaseOrder within module 'order'!
+[ERROR] Method <com.acme.shop.inventory.internal.InventoryListener.on(com.acme.shop.order.events.OrderPlaced)> calls constructor <com.acme.shop.order.internal.PurchaseOrder.<init>(java.lang.String)> in (InventoryListener.java:12)
+----
+
+Each violation starts with `- `, followed by one line per reference that causes it.
+
+== Status
+
+The extension is experimental. The xref:modules.adoc[module rules] follow Spring Modulith closely. The APIs may still change before 1.0.
+
+[[extension-configuration-reference]]
+== Extension configuration reference
+
+See xref:config-reference.adoc[].
