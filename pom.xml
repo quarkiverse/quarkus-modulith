@@ -76,7 +76,7 @@
             application.
         -->
         <argLine>-XX:+EnableDynamicAgentLoading --add-opens=java.base/java.lang.invoke=ALL-UNNAMED</argLine>
-        <assertj.version>3.27.6</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
         <archunit.version>1.4.2</archunit.version>
         <!-- JobRunr's Quarkus extension. The same release serves both Quarkus lines. -->
         <jobrunr.version>9.0.4</jobrunr.version>
