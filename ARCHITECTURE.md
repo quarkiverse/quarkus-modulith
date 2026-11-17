@@ -165,7 +165,7 @@ The extension is built against Quarkus 4.0.0.CR1 with Java 21 bytecode. This bra
 2. Recording. Quarkus 4 deprecates `@Record` and `ExecutionTime` for `ServiceRegistrar`. This branch uses static-init services, `3.40.x` keeps recorders.
 3. Default beans. Quarkus 4 replaces `@DefaultBean` with CDI's `@Reserve`.
 
-The extension version follows the Quarkus version it targets. CI builds on JDK 21 (and JDK 25 weekly), and builds every integration-test application as a native executable.
+The extension version follows the Quarkus version it targets. CI builds on JDK 21 and builds every integration-test application as a native executable.
 
 ## Coverage
 

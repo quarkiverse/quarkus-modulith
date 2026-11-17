@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - "main"
-      - "*.x"
+      - "[0-9]+.[0-9]+.x"
     paths-ignore:
       - '.gitignore'
       - 'CODEOWNERS'
@@ -18,7 +18,7 @@ on:
   pull_request:
     branches:
       - "main"
-      - "*.x"
+      - "[0-9]+.[0-9]+.x"
     paths-ignore:
       - '.gitignore'
       - 'CODEOWNERS'
@@ -30,10 +30,9 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 defaults:
@@ -46,51 +45,46 @@ env:
     -Daether.connector.http.retryHandler.count=5
     -Daether.connector.http.retryHandler.interval=10000
     -Daether.connector.http.retryHandler.serviceUnavailable=429,500,502,503,504
+    ${{ github.event_name == 'pull_request' && format('-Dscalpel.baseBranch=origin/{0}', github.base_ref) || '-Dscalpel.enabled=false' }}
 
 jobs:
   build:
-    name: Build on JDK ${{ matrix.java }} with ${{ matrix.quarkus.name }}
-    strategy:
-      fail-fast: false
-      matrix:
-        java: [21, 25]
-        quarkus:
-          - name: Quarkus 4
-            id: quarkus4
-            profile: ""
+    name: Build on JDK 21
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Set up JDK ${{ matrix.java }}
+      - name: Set up JDK 21
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: ${{ matrix.java }}
+          java-version: 21
 
       - name: Restore the Maven repository
         id: maven-cache
         uses: actions/cache/restore@v6
         with:
           path: ~/.m2/repository
-          key: maven-${{ matrix.quarkus.id }}-${{ hashFiles('**/pom.xml') }}
-          restore-keys: maven-${{ matrix.quarkus.id }}-
+          key: maven-quarkus4-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-quarkus4-
 
       - name: Resolve the parent POMs and build extensions
         run: |
           for attempt in 1 2 3; do
-            ./mvnw -q validate -Dno-format ${{ matrix.quarkus.profile }} && exit 0
+            ./mvnw -q validate -Dno-format && exit 0
             echo "Resolution attempt $attempt failed"
             sleep 30
           done
           exit 1
 
-      - name: Build, test and check coverage
-        run: ./mvnw clean verify -Dno-format ${{ matrix.quarkus.profile }}
+      - name: Build and test
+        run: ./mvnw clean verify -Dno-format ${{ github.event_name == 'pull_request' && '-pl !coverage' || '' }}
 
       - name: Save the Maven repository
-        if: success() && matrix.java == 21 && steps.maven-cache.outputs.cache-hit != 'true'
+        if: success() && github.event_name != 'pull_request' && steps.maven-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
           path: ~/.m2/repository
@@ -105,38 +99,25 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-jdk${{ matrix.java }}-${{ matrix.quarkus.id }}
+          name: coverage-jdk21
           path: coverage/target/site/jacoco
           if-no-files-found: ignore
 
   native:
-    name: Native ${{ matrix.module }} with ${{ matrix.quarkus.name }}
-    strategy:
-      fail-fast: false
-      matrix:
-        module:
-          - shop
-          - violations
-          - events-jdbc
-          - events-mongodb
-          - events-neo4j
-          - externalization-kafka
-          - externalization-kafka-outbox
-          - externalization-rabbitmq
-          - externalization-amqp
-          - externalization-jms
-          - externalization-jobrunr
-          - moments
-          - observability
-          - flyway
-        quarkus:
-          - name: Quarkus 4
-            id: quarkus4
-            profile: ""
+    name: Native integration tests
+    needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150
     steps:
+      - name: Free disk space for the native builds and container images
+        run: |
+          df -h /
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v6
@@ -145,20 +126,30 @@ jobs:
           java-version: 21
 
       - name: Restore the Maven repository
+        id: maven-cache
         uses: actions/cache/restore@v6
         with:
           path: ~/.m2/repository
-          key: maven-${{ matrix.quarkus.id }}-${{ hashFiles('**/pom.xml') }}
-          restore-keys: maven-${{ matrix.quarkus.id }}-
+          key: maven-native-quarkus4-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-native-quarkus4-
+            maven-quarkus4-
 
       - name: Resolve the parent POMs and build extensions
         run: |
           for attempt in 1 2 3; do
-            ./mvnw -q validate -Dno-format ${{ matrix.quarkus.profile }} -pl integration-tests/${{ matrix.module }} -am && exit 0
+            ./mvnw -q validate -Dno-format && exit 0
             echo "Resolution attempt $attempt failed"
             sleep 30
           done
           exit 1
 
-      - name: Build and test ${{ matrix.module }} as a native executable
-        run: ./mvnw verify -Dno-format -Dnative -Dquarkus.native.container-build=true ${{ matrix.quarkus.profile }} -pl integration-tests/${{ matrix.module }} -am
+      - name: Build and test the integration test applications as native executables
+        run: ./mvnw verify -Dno-format -Dnative -Dquarkus.native.container-build=true -pl '!coverage'
+
+      - name: Save the Maven repository
+        if: success() && github.event_name != 'pull_request' && steps.maven-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.m2/repository
+          key: ${{ steps.maven-cache.outputs.cache-primary-key }}
