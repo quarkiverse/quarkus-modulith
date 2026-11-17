@@ -62,9 +62,7 @@
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.version>3.40.1.2</quarkus.version>
-        <!-- Selects src/main/quarkus3 or src/main/quarkus4 for code that differs between Quarkus 3 and 4 -->
-        <modulith.quarkus.line>quarkus3</modulith.quarkus.line>
+        <quarkus.version>4.0.0.CR1</quarkus.version>
         <build-helper-plugin.version>3.6.2</build-helper-plugin.version>
         <jacoco.version>0.8.16</jacoco.version>
         <dependency-plugin.version>3.11.0</dependency-plugin.version>
@@ -140,6 +138,11 @@
                     <version>${jacoco.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${build-helper-plugin.version}</version>
+                </plugin>
+                <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <version>${dependency-plugin.version}</version>
                 </plugin>
@@ -197,49 +200,10 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>${build-helper-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>add-quarkus-line-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.basedir}/src/main/${modulith.quarkus.line}/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>add-quarkus-line-test-sources</id>
-                        <phase>generate-test-sources</phase>
-                        <goals>
-                            <goal>add-test-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.basedir}/src/test/${modulith.quarkus.line}/java</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <profiles>
-        <profile>
-            <!-- Builds and tests against the latest Quarkus 4 pre-release -->
-            <id>quarkus-4</id>
-            <properties>
-                <quarkus.version>4.0.0.CR1</quarkus.version>
-                <modulith.quarkus.line>quarkus4</modulith.quarkus.line>
-            </properties>
-        </profile>
         <profile>
             <id>docs</id>
             <activation>

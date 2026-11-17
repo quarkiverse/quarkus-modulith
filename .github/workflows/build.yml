@@ -55,12 +55,9 @@ jobs:
       matrix:
         java: [21, 25]
         quarkus:
-          - name: Quarkus 3
-            id: quarkus3
-            profile: ""
           - name: Quarkus 4
             id: quarkus4
-            profile: "-Pquarkus-4"
+            profile: ""
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -133,12 +130,9 @@ jobs:
           - observability
           - flyway
         quarkus:
-          - name: Quarkus 3
-            id: quarkus3
-            profile: ""
           - name: Quarkus 4
             id: quarkus4
-            profile: "-Pquarkus-4"
+            profile: ""
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:

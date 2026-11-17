@@ -41,8 +41,8 @@ import io.quarkus.runtime.LaunchMode;
 
 /**
  * Builds and verifies the application module model with the analysis of {@code quarkus-modulith-core}. The model is
- * written to a resource for runtime use, and {@code ModelRecordingSteps}, which differs between Quarkus 3 and Quarkus 4,
- * records the small runtime beans.
+ * written to a resource for runtime use, and {@code ModelRecordingSteps} records
+ * the small runtime beans.
  */
 class ModelProcessor {
 

@@ -56,7 +56,7 @@ The artifacts are published to Maven Central under the group `io.quarkiverse.mod
 | 4.0 | 4.0.x (pre-releases such as 4.0.0.CR1 until Quarkus 4.0 is final) | `main` |
 | 3.40 | 3.40.x | `3.40.x` |
 
-On Quarkus 3, import the BOM next to the Quarkus BOM:
+Import the BOM next to the Quarkus BOM. On Quarkus 3.40, use the Quarkus 3.40 BOM with a 3.40.x version of the extension instead:
 
 ```xml
 <dependencyManagement>
@@ -64,14 +64,14 @@ On Quarkus 3, import the BOM next to the Quarkus BOM:
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-bom</artifactId>
-            <version>3.40.1.2</version>
+            <version>4.0.0.CR1</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.modulith</groupId>
             <artifactId>quarkus-modulith-bom</artifactId>
-            <version>3.40.0</version>
+            <version>4.0.0.CR1</version>
             <type>pom</type>
             <scope>import</scope>
         </dependency>
@@ -159,11 +159,7 @@ The full guide is in [docs](docs/modules/ROOT/pages/index.adoc), the public API 
 ./mvnw verify
 ```
 
-The build needs Java 21 or later and Docker, because the integration tests start databases and brokers with Dev Services. It fails below 100% line or branch coverage; the merged report is in `coverage/target/site/jacoco`. The extension builds against Quarkus 3.40.1.2, and against Quarkus 4.0.0.CR1 with
-
-```
-./mvnw verify -Pquarkus-4
-```
+The build needs Java 21 or later and Docker, because the integration tests start databases and brokers with Dev Services. It fails below 100% line or branch coverage; the merged report is in `coverage/target/site/jacoco`. The extension builds against Quarkus 4.0.0.CR1. The Quarkus 3.40 line is built from the `3.40.x` branch.
 
 To build and test the native executables on Linux, run
 

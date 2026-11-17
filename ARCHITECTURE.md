@@ -159,19 +159,13 @@ Nothing in the runtime scans the classpath or reflects on application classes, w
 
 ## Compatibility
 
-The extension is built against Quarkus 3.40.1.2 with Java 21 bytecode. The `quarkus-4` profile builds and tests everything against Quarkus 4.0.0.CR1:
+The extension is built against Quarkus 4.0.0.CR1 with Java 21 bytecode. This branch releases the Quarkus 4 line (4.0.x); the Quarkus 3.40 line (3.40.x) is released from the `3.40.x` maintenance branch, which differs in three places:
 
-```
-./mvnw verify -Pquarkus-4
-```
-
-Code that differs between the two lines lives in `src/main/quarkus3` and `src/main/quarkus4` (and the matching test folders), added by `build-helper-maven-plugin` according to the `modulith.quarkus.line` property. Three things differ:
-
-1. Jackson. Quarkus 4 ships Jackson 3 (`tools.jackson`). The JSON code sits behind `EventSerializer`, with one `JacksonEventSerializer` per line; Moments registers its Jackson module through the matching customizer.
-2. Recording. Quarkus 4 deprecates `@Record` and `ExecutionTime` for `ServiceRegistrar`. The Quarkus 3 line keeps recorders, the Quarkus 4 line uses static-init services.
+1. Jackson. Quarkus 4 ships Jackson 3 (`tools.jackson`), Quarkus 3 Jackson 2. The JSON code sits behind `EventSerializer`; Moments registers its Jackson module through a customizer.
+2. Recording. Quarkus 4 deprecates `@Record` and `ExecutionTime` for `ServiceRegistrar`. This branch uses static-init services, `3.40.x` keeps recorders.
 3. Default beans. Quarkus 4 replaces `@DefaultBean` with CDI's `@Reserve`.
 
-Because the bytecode differs, the two lines cannot share one artifact set. Each line is released from its own branch with the matching default: the Quarkus 4 line (4.0.x) from `main`, the Quarkus 3.40 line (3.40.x) from the `3.40.x` maintenance branch. The extension version follows the Quarkus version it targets. CI builds on JDK 21 and 25, for both lines, and builds every integration-test application as a native executable.
+The extension version follows the Quarkus version it targets. CI builds on JDK 21 (and JDK 25 weekly), and builds every integration-test application as a native executable.
 
 ## Coverage
 
