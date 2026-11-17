@@ -1,5 +1,5 @@
 name: quarkus-modulith
 title: Modulith
-version: 3.40.x
+version: 1.x
 nav:
   - modules/ROOT/nav.adoc
