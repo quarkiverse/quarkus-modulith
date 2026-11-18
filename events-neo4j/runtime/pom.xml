@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.quarkiverse.modulith</groupId>
         <artifactId>quarkus-modulith-parent</artifactId>
-        <version>1.0.0</version>
+        <version>999-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <artifactId>quarkus-modulith-events-neo4j</artifactId>
