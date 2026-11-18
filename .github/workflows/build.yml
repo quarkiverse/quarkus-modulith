@@ -45,7 +45,7 @@ env:
     -Daether.connector.http.retryHandler.count=5
     -Daether.connector.http.retryHandler.interval=10000
     -Daether.connector.http.retryHandler.serviceUnavailable=429,500,502,503,504
-    ${{ github.event_name == 'pull_request' && format('-Dscalpel.baseBranch=origin/{0}', github.base_ref) || '-Dscalpel.enabled=false' }}
+    ${{ github.event_name == 'pull_request' && format('-Dscalpel.enabled=true -Dscalpel.baseBranch=origin/{0}', github.base_ref) || '' }}
 
 jobs:
   build:
