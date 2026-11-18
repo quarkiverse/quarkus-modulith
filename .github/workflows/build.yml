@@ -68,8 +68,8 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ~/.m2/repository
-          key: maven-quarkus4-${{ hashFiles('**/pom.xml') }}
-          restore-keys: maven-quarkus4-
+          key: maven-${{ github.base_ref || github.ref_name }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-${{ github.base_ref || github.ref_name }}-
 
       - name: Resolve the parent POMs and build extensions
         run: |
@@ -130,10 +130,10 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ~/.m2/repository
-          key: maven-native-quarkus4-${{ hashFiles('**/pom.xml') }}
+          key: maven-native-${{ github.base_ref || github.ref_name }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            maven-native-quarkus4-
-            maven-quarkus4-
+            maven-native-${{ github.base_ref || github.ref_name }}-
+            maven-${{ github.base_ref || github.ref_name }}-
 
       - name: Resolve the parent POMs and build extensions
         run: |
