@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.quarkiverse.modulith</groupId>
         <artifactId>quarkus-modulith-parent</artifactId>
-        <version>999-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
     <artifactId>quarkus-modulith-api</artifactId>
     <name>Quarkus Modulith - API</name>
